@@ -3,9 +3,15 @@ import UserController from '../controllers/userController.js';
 
 const router = Router();
 
+router.post('/', UserController.createUser);
+router.get('/', UserController.getAllUsers);
+router.get('/:id', UserController.getUserById);
+router.put('/:id', UserController.updateUser);
+router.delete('/:id', UserController.deleteUser);
+
 /**
  * @swagger
- * /api/users:
+ * /users:
  *   post:
  *     summary: Create a new user
  *     description: Add a new user to the system.
@@ -24,11 +30,11 @@ const router = Router();
  *       201:
  *         description: User created successfully.
  */
-router.post('/', UserController.createUser);
+
 
 /**
  * @swagger
- * /api/users:
+ * /users:
  *   get:
  *     summary: Retrieve a list of users
  *     description: Retrieve all user data from the system.
@@ -51,11 +57,11 @@ router.post('/', UserController.createUser);
  *                     description: The user's name.
  *                     example: John Doe
  */
-router.get('/', UserController.getAllUsers);
+
 
 /**
  * @swagger
- * /api/users/{id}:
+ * /users/{id}:
  *   get:
  *     summary: Retrieve a user by ID
  *     description: Get a specific user from the system by their ID.
@@ -73,11 +79,11 @@ router.get('/', UserController.getAllUsers);
  *       404:
  *         description: User not found.
  */
-router.get('/:id', UserController.getUserById);
+
 
 /**
  * @swagger
- * /api/users/{id}:
+ * /users/{id}:
  *   put:
  *     summary: Update a user
  *     description: Update the data of an existing user by their ID.
@@ -106,11 +112,11 @@ router.get('/:id', UserController.getUserById);
  *       404:
  *         description: User not found.
  */
-router.put('/:id', UserController.updateUser);
+
 
 /**
  * @swagger
- * /api/users/{id}:
+ * /users/{id}:
  *   delete:
  *     summary: Delete a user
  *     description: Remove a user from the system by their ID.
@@ -128,6 +134,6 @@ router.put('/:id', UserController.updateUser);
  *       404:
  *         description: User not found.
  */
-router.delete('/:id', UserController.deleteUser);
+
 
 export default router;
