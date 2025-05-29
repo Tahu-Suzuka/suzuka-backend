@@ -3,6 +3,7 @@ import { config } from "dotenv";
 import database from './configs/database.js';
 import { swaggerUi, specs } from './configs/swagger.js';
 import routerApi from './routes/index.js'; // Import routerApi
+import authRoute from "./routes/authRoute.js";
 
 config();
 const app = express();
@@ -13,6 +14,8 @@ app.use(json());
 
 // Endpoint Swagger UI
 app.use('/api-docs', swaggerUi.serve, swaggerUi.setup(specs));
+
+app.use("/auth", authRoute);
 
 // Endpoint utama
 app.get("/", (req, res) => {

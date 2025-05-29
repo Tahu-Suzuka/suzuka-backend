@@ -15,12 +15,17 @@ class User extends Model {
 
 const UserSchema = {
   id: {
-    allowNull: false,
+    type: DataTypes.UUID, // Gunakan UUID
     primaryKey: true,
-    type: DataTypes.STRING,
+    defaultValue: DataTypes.UUIDV4, // Ini akan menghasilkan UUID otomatis jika tidak diberikan
     field: "user_id",
+    allowNull: false,
   },
   name: {
+    allowNull: false,
+    type: DataTypes.STRING,
+  },
+  password : {
     allowNull: false,
     type: DataTypes.STRING,
   },
@@ -36,6 +41,19 @@ const UserSchema = {
   },
   image: {
     type: DataTypes.STRING
+  },
+  otp: {
+    type: DataTypes.STRING,
+    allowNull: true,
+  },
+  isVerified: {
+    type: DataTypes.BOOLEAN,
+    defaultValue: false,
+  },
+  role: {
+    type: DataTypes.ENUM('user', 'admin'),
+    defaultValue: 'user',
+    allowNull: false
   }
 };
 

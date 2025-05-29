@@ -1,13 +1,14 @@
 import { Router } from 'express';
 import UserController from '../controllers/userController.js';
+import { authenticate } from "../middleware/auth.js";
 
 const router = Router();
 
 router.post('/', UserController.createUser);
 router.get('/', UserController.getAllUsers);
-router.get('/:id', UserController.getUserById);
-router.put('/:id', UserController.updateUser);
-router.delete('/:id', UserController.deleteUser);
+router.get('/:id', authenticate, UserController.getUserById);
+router.put('/:id', authenticate, UserController.updateUser);
+router.delete('/:id', authenticate, UserController.deleteUser);
 
 /**
  * @swagger
@@ -64,6 +65,8 @@ router.delete('/:id', UserController.deleteUser);
  * /users/{id}:
  *   get:
  *     summary: Retrieve a user by ID
+ *     security:
+ *       - bearerAuth: []
  *     description: Get a specific user from the system by their ID.
  *     parameters:
  *       - name: id
@@ -71,7 +74,8 @@ router.delete('/:id', UserController.deleteUser);
  *         required: true
  *         description: ID of the user to retrieve.
  *         schema:
- *           type: integer
+ *           type: string
+ *           format: uuid
  *           example: 1
  *     responses:
  *       200:
@@ -80,12 +84,13 @@ router.delete('/:id', UserController.deleteUser);
  *         description: User not found.
  */
 
-
 /**
  * @swagger
  * /users/{id}:
  *   put:
  *     summary: Update a user
+ *     security:
+ *       - bearerAuth: []
  *     description: Update the data of an existing user by their ID.
  *     parameters:
  *       - name: id
@@ -113,12 +118,13 @@ router.delete('/:id', UserController.deleteUser);
  *         description: User not found.
  */
 
-
 /**
  * @swagger
  * /users/{id}:
  *   delete:
  *     summary: Delete a user
+ *     security:
+ *       - bearerAuth: []
  *     description: Remove a user from the system by their ID.
  *     parameters:
  *       - name: id
