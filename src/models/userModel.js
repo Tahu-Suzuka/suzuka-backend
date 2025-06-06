@@ -54,7 +54,12 @@ const UserSchema = {
     type: DataTypes.ENUM('user', 'admin'),
     defaultValue: 'user',
     allowNull: false
+  },
+  googleId: {
+  type: DataTypes.STRING,
+  unique: true,
   }
+
 };
 
 export { User, UserSchema };

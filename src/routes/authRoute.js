@@ -1,15 +1,44 @@
 import { Router } from 'express';
 import AuthController from '../controllers/authController.js';
 import { authenticate } from "../middleware/auth.js";
+import passport from "passport";
+import { generateJwtToken } from '../utils/jwt.js';
+
 
 const router = Router();
 
 router.post('/register', AuthController.register);
 router.post('/login', AuthController.login);
+router.post("/google", AuthController.loginWithGoogle);
 router.post("/verify-otp", AuthController.verifyOtp);
 router.post("/resend-otp", AuthController.resendOtp);
 router.post("/forgot-password", AuthController.forgotPassword);
 router.post("/reset-password", AuthController.resetPassword);
+
+
+router.get('/google', passport.authenticate('google', { scope: ['profile', 'email'] }));
+
+router.get(
+  '/google/callback',
+  passport.authenticate('google', {
+    failureRedirect: '/auth/login-failed',
+    session: false, // kalau kamu pakai JWT
+  }),
+  async (req, res) => {
+    // Di sini kamu bisa kirim token, redirect, atau kirim data user
+    const user = req.user;
+    
+    // Contoh: kirim JWT token
+    const token = generateJwtToken(user); // buat fungsi ini sendiri
+    res.json({ message: 'Login sukses', token, user });
+  }
+);
+
+
+router.get('/login-failed', (req, res) => {
+  res.status(401).json({ message: "Login dengan Google gagal" });
+});
+
 
 
 /**
@@ -307,6 +336,91 @@ router.post("/reset-password", AuthController.resetPassword);
  *       400:
  *         description: OTP tidak valid atau password tidak sesuai kriteria
  */
+
+/**
+ * @swagger
+ * /auth/google:
+ *   get:
+ *     summary: Login user menggunakan Google OAuth
+ *     tags: [Auth]
+ *     description: Mengarahkan user ke Google untuk login.
+ *     responses:
+ *       302:
+ *         description: Redirect ke halaman login Google
+ */
+
+/**
+ * @swagger
+ * /auth/google/callback:
+ *   get:
+ *     summary: Callback dari Google setelah login
+ *     tags: [Auth]
+ *     description: Callback URL dari Google setelah user berhasil login.
+ *     responses:
+ *       200:
+ *         description: Login berhasil
+ *       401:
+ *         description: Login gagal
+ */
+
+/**
+ * @swagger
+ * /auth/login-failed:
+ *   get:
+ *     summary: Login Google gagal
+ *     tags: [Auth]
+ *     responses:
+ *       401:
+ *         description: Gagal login menggunakan Google
+ */
+
+/**
+ * @swagger
+ * /auth/google:
+ *   post:
+ *     summary: Login atau register user menggunakan akun Google
+ *     tags: [Auth]
+ *     description: Endpoint ini menerima token Google dari frontend dan mengautentikasi atau mendaftarkan user jika belum ada.
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             required:
+ *               - token
+ *             properties:
+ *               token:
+ *                 type: string
+ *                 description: Token ID dari Google Sign-In
+ *                 example: ya29.a0AfH6SMBeE...
+ *     responses:
+ *       200:
+ *         description: Login sukses, JWT token dikembalikan
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 message:
+ *                   type: string
+ *                   example: Login sukses
+ *                 token:
+ *                   type: string
+ *                   example: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...
+ *                 user:
+ *                   type: object
+ *                   properties:
+ *                     id:
+ *                       type: string
+ *                     name:
+ *                       type: string
+ *                     email:
+ *                       type: string
+ *       400:
+ *         description: Token tidak valid atau login gagal
+ */
+
 
 
 
