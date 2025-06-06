@@ -1,13 +1,19 @@
 import { Router } from 'express';
 import ProductController from '../controllers/productController.js';
+import { authenticate } from '../middleware/auth.js';
+import { validateAdmin } from '../middleware/validateAdmin.js';
+import { uploadProduct } from '../middleware/upload.js'; // Impor uploadProduct
 
 const router = Router();
 
-router.post('/', ProductController.createProduct);
+// Terapkan middleware 'authenticate' dan 'validateAdmin' pada rute yang perlu diamankan
+router.post('/', authenticate, validateAdmin, uploadProduct.single('product_image'), ProductController.createProduct);
+router.put('/:id', authenticate, validateAdmin, uploadProduct.single('product_image'), ProductController.updateProduct);
+router.delete('/:id', authenticate, validateAdmin, ProductController.deleteProduct);
+
+// Rute GET biarkan publik (bisa diakses siapa saja)
 router.get('/', ProductController.getAllProducts);
 router.get('/:id', ProductController.getProductById);
-router.put('/:id', ProductController.updateProduct);
-router.delete('/:id', ProductController.deleteProduct);
 router.get('/category/:category', ProductController.getProductByCategory);
 router.get('/name/:name', ProductController.getProductByName);
 

@@ -21,42 +21,25 @@ class AuthController {
     }
   }
 
-  async loginWithGoogle(req, res) {
-  try {
-    const { email, name } = req.body;
-    const result = await authService.loginWithGoogle({ email, name });
-
-    if (result.isNew || result.isVerified === false) {
-      return res.status(200).json({
-        message: result.message,
-        data: {
-          id: result.user.id,
-          email: result.user.email,
-          isVerified: result.user.isVerified
-        }
-      });
+async loginWithGoogle(req, res) {
+    try {
+      // Ambil data dari body, mungkin dari token google yang sudah di-decode di frontend
+      const { email, name, googleId } = req.body; 
+      const result = await authService.loginWithGoogle({ email, name, googleId });
+      res.status(200).json({ message: "Login Google berhasil", data: result });
+    } catch (err) {
+      res.status(500).json({ message: err.message });
     }
-
-    return res.status(200).json({
-      message: result.message,
-      data: {
-        token: result.token,
-        user: result.user
-      }
-    });
-  } catch (err) {
-    res.status(500).json({ message: err.message });
-  }
 }
 
 
-  async verifyOtp(req, res) {
-  try {
-    const result = await authService.verifyOtp(req.body);
-    res.status(200).json(result);
-  } catch (err) {
-    res.status(400).json({ message: err.message });
-  }
+ async verifyOtp(req, res) {
+    try {
+      const result = await authService.verifyOtp(req.body);
+      res.status(200).json(result);
+    } catch (err) {
+      res.status(400).json({ message: err.message });
+    }
 }
 
 async resendOtp(req, res) {

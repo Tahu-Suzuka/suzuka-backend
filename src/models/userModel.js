@@ -1,12 +1,12 @@
 import { Model, DataTypes } from "sequelize";
 
-const TABLE_NAME = "users";
+const TABLE_NAME_USERS = "users";
 
 class User extends Model {
   static config(sequelize) {
     return {
       sequelize,
-      tableName: TABLE_NAME,
+      tableName: TABLE_NAME_USERS,
       modelName: "User",
       timestamps: false,
     };
@@ -62,4 +62,4 @@ const UserSchema = {
 
 };
 
-export { User, UserSchema };
+export { User, UserSchema, TABLE_NAME_USERS };

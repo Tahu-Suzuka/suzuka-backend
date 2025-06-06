@@ -1,6 +1,7 @@
 import { Router } from 'express';
 import UserController from '../controllers/userController.js';
 import { authenticate } from "../middleware/auth.js";
+import { uploadProfile } from '../middleware/upload.js'; 
 
 const router = Router();
 
@@ -8,6 +9,8 @@ router.post('/', UserController.createUser);
 router.get('/', UserController.getAllUsers);
 router.get('/:id', authenticate, UserController.getUserById);
 router.put('/:id', authenticate, UserController.updateUser);
+router.put('/profile', authenticate, UserController.updateProfile);
+router.put('/profile/picture',authenticate, uploadProfile.single('profile_picture'), UserController.updateProfilePicture);
 router.delete('/:id', authenticate, UserController.deleteUser);
 
 /**

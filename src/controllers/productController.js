@@ -5,13 +5,21 @@ import { validationResult } from "express-validator";
 const productService = new ProductService(Product);
 
 class ProductController {
-    async createProduct(req, res) {
+     async createProduct(req, res) {
         try {
             const errors = validationResult(req);
             if (!errors.isEmpty()) {
                 return res.status(422).json({ errors: errors.array() });
             }
-            const data = req.body;
+        
+            const adminId = req.user.id;
+            const data = { ...req.body, userId: adminId };
+
+            if (req.file) {
+              const imagePath = req.file.path.replace(/\\/g, "/").replace("public/", "/");
+              data.image = imagePath;
+            }
+
             const product = await productService.create(data);
             res.status(201).json({
                 message: "Berhasil membuat produk baru",
@@ -57,26 +65,39 @@ class ProductController {
             }
         }
 
-        async updateProduct(req, res) {
-            try {
-                const { id } = req.params;
-                const data = req.body;
-                const product = await productService.update(id, data);
-                if (!product) {
-                    return res.status(404).json({
-                        message: `Produk dengan ID ${id} tidak ditemukan`,
-                    });
+async updateProduct(req, res) {
+        try {
+            const { id } = req.params;
+            const data = req.body;
+
+            if (req.file) {
+                const existingProduct = await productService.getById(id);
+                if (existingProduct && existingProduct.image) {
+                    const oldImagePath = path.join('public', existingProduct.image);
+                    if (fs.existsSync(oldImagePath)) {
+                        fs.unlinkSync(oldImagePath);
+                    }
                 }
-                res.status(200).json({
-                    message: "Berhasil memperbarui produk",
-                    data: product,
-                });
-            } catch (error) {
-                res.status(500).json({
-                    message: error.message || "Gagal memperbarui produk",
+                const imagePath = req.file.path.replace(/\\/g, "/").replace("public/", "/");
+                data.image = imagePath;
+            }
+
+            const product = await productService.update(id, data);
+            if (!product) {
+                return res.status(404).json({
+                    message: `Produk dengan ID ${id} tidak ditemukan`,
                 });
             }
+            res.status(200).json({
+                message: "Berhasil memperbarui produk",
+                data: product,
+            });
+        } catch (error) {
+            res.status(500).json({
+                message: error.message || "Gagal memperbarui produk",
+            });
         }
+    }
         async deleteProduct(req, res) {
             try {
                 const { id } = req.params;

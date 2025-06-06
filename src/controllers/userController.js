@@ -69,6 +69,41 @@
         });
       }
     }
+    async updateProfile(req, res) {
+    try {
+      const userId = req.user.id; 
+      const updatedUser = await userService.updateProfile(userId, req.body);
+      
+      res.status(200).json({
+        message: "Profil berhasil diperbarui",
+        data: updatedUser,
+      });
+    } catch (err) {
+      res.status(400).json({ message: err.message });
+    }
+  }
+
+    async updateProfilePicture(req, res) {
+    try {
+      if (!req.file) {
+        return res.status(400).json({ message: "File gambar tidak ditemukan." });
+      }
+
+      const userId = req.user.id;
+      // Dapatkan path relatif yang bisa diakses publik
+      const imagePath = req.file.path.replace(/\\/g, "/").replace("public/", "/");
+
+      const updatedUser = await userService.updateProfile(userId, { image: imagePath });
+
+      res.status(200).json({
+        message: "Foto profil berhasil diperbarui",
+        data: updatedUser,
+      });
+    } catch (err) {
+      res.status(400).json({ message: err.message });
+    }
+  }
+   
 
     // Menghapus user berdasarkan ID
     async deleteUser(req, res) {
@@ -84,6 +119,9 @@
         });
       }
     }
+
+    
   }
+  
 
   export default new UserController();

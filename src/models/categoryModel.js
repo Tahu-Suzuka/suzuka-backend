@@ -1,12 +1,12 @@
 import { Model, DataTypes } from 'sequelize';
 
-const TABLE_NAME = 'categories';
+const TABLE_NAME_CATEGORIES = 'categories';
 
 class Category extends Model {
     static config(sequelize) {
         return {
             sequelize,
-            tableName: TABLE_NAME,
+            tableName: TABLE_NAME_CATEGORIES,
             modelName: 'Category',
             timestamps: true,
             createdAt: 'createdAt',
@@ -28,4 +28,4 @@ const CategorySchema = {
     }
 };
 
-export { Category, CategorySchema };
+export { Category, CategorySchema, TABLE_NAME_CATEGORIES };

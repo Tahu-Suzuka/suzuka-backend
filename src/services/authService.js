@@ -42,7 +42,7 @@ export class AuthService {
     throw new Error("Akun Anda belum diverifikasi. Silakan cek email Anda untuk OTP.");
     }
 
-    const match = await bcrypt.compare(password, user.password);a
+    const match = await bcrypt.compare(password, user.password);
     if (!match) throw new Error("Email / password salah");
 
     const token = generateJwtToken(user);
@@ -53,46 +53,31 @@ export class AuthService {
     };
   }
   
-   async loginWithGoogle({ email, name }) {
+    async loginWithGoogle({ email, name, googleId }) {
     let user = await User.findOne({ where: { email } });
+    let isNewUser = false;
 
     if (!user) {
-      const otp = Math.floor(100000 + Math.random() * 900000).toString();
+      // Jika user tidak ada, buat user baru yang sudah terverifikasi
       user = await User.create({
+        googleId, // Simpan googleId
         email,
         name,
-        isVerified: false,
-        otp,
-        role: "customer"
+        password: 'dummypassword_google_user', // Isi dengan password dummy karena tidak akan digunakan
+        isVerified: true, // Langsung set true
+        role: "user" // Pastikan rolenya 'user' bukan 'customer' sesuai model
       });
-      await sendOtpEmail(email, otp);
-      return {
-        isNew: true,
-        message: "Akun berhasil dibuat. Silakan verifikasi OTP yang dikirim ke email.",
-        user
-      };
-    }
-
-    if (!user.isVerified) {
-      const newOtp = Math.floor(100000 + Math.random() * 900000).toString();
-      user.otp = newOtp;
-      await user.save();
-      await sendOtpEmail(email, newOtp);
-      return {
-        isNew: false,
-        isVerified: false,
-        message: "Akun belum diverifikasi. OTP baru dikirim ke email.",
-        user
-      };
+      isNewUser = true;
     }
 
     const token = generateJwtToken(user);
+    
+    const isProfileComplete = !!(user.address && user.phone);
 
     return {
-      isNew: false,
-      isVerified: true,
-      message: "Login berhasil",
+      isNew: isNewUser,
       token,
+      isProfileComplete, // Kirim status kelengkapan profil
       user: {
         id: user.id,
         email: user.email,
@@ -103,19 +88,29 @@ export class AuthService {
   }
   
   async verifyOtp({ email, otp }) {
-  const user = await User.findOne({ where: { email } });
-  if (!user) throw new Error("User tidak ditemukan");
+    const user = await User.findOne({ where: { email } });
+    if (!user) throw new Error("User tidak ditemukan");
 
-  if (user.otp !== otp) {
-    throw new Error("OTP tidak sesuai");
+    if (user.otp !== otp) {
+      throw new Error("OTP tidak sesuai");
+    }
+
+    user.isVerified = true;
+    user.otp = null; // Hapus OTP setelah diverifikasi
+    await user.save();
+
+    // Setelah verifikasi, langsung generate token agar user bisa login
+    const token = generateJwtToken(user);
+    
+    // Cek apakah profil sudah lengkap (pasti belum untuk user baru)
+    const isProfileComplete = !!(user.address && user.phone);
+
+    return { 
+        message: "Email berhasil diverifikasi",
+        token, // Kirim token
+        isProfileComplete // Kirim status kelengkapan profil
+    };
   }
-
-  user.isVerified = true;
-  user.otp = null; // Hapus OTP setelah diverifikasi
-  await user.save();
-
-  return { message: "Email berhasil diverifikasi" };
-}
 
 async resendOtp(email) {
   const user = await User.findOne({ where: { email } });
