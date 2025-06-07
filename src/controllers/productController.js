@@ -52,18 +52,19 @@ class ProductController {
         }
 
         async getAllProducts(req, res) {
-            try {
-                const products = await productService.getAll();
-                res.status(200).json({
-                    message: "Berhasil mengambil data semua produk",
-                    data: products,
-                });
-            } catch (error) {
-                res.status(500).json({
-                    message: error.message || "Gagal mengambil data produk",
-                });
+                try {
+                    // req.query akan berisi semua parameter dari URL (?key=value&key2=value2)
+                    const result = await productService.getAll(req.query);
+                    res.status(200).json({
+                        message: "Berhasil mengambil data semua produk",
+                        data: result,
+                    });
+                } catch (error) {
+                    res.status(500).json({
+                        message: error.message || "Gagal mengambil data produk",
+                    });
+                }
             }
-        }
 
 async updateProduct(req, res) {
         try {
@@ -117,44 +118,29 @@ async updateProduct(req, res) {
                 });
             }
         }
-        async getProductByCategory(req, res) {
-            try {
-                const { category } = req.params;
-                const products = await productService.getByCategory(category);
-                if (!products || products.length === 0) {
-                    return res.status(404).json({
-                        message: `Produk dengan kategori ${category} tidak ditemukan`,
-                    });
-                }
-                res.status(200).json({
-                    message: "Berhasil mengambil data produk",
-                    data: products,
-                });
-            } catch (error) {
-                res.status(500).json({
-                    message: error.message || "Gagal mengambil data produk",
+        async searchProducts(req, res) {
+        try {
+            const { q } = req.query; 
+
+            const products = await productService.searchByName(q);
+            
+            if (!products || products.length === 0) {
+                return res.status(404).json({
+                    message: `Produk dengan nama yang mengandung "${q}" tidak ditemukan`,
+                    data: []
                 });
             }
+
+            res.status(200).json({
+                message: "Berhasil mengambil data produk",
+                data: products,
+            });
+        } catch (error) {
+            res.status(500).json({
+                message: error.message || "Gagal melakukan pencarian produk",
+            });
         }
-        async getProductByName(req, res) {
-            try {
-                const { name } = req.params;
-                const products = await productService.getByName(name);
-                if (!products || products.length === 0) {
-                    return res.status(404).json({
-                        message: `Produk dengan nama ${name} tidak ditemukan`,
-                    });
-                }
-                res.status(200).json({
-                    message: "Berhasil mengambil data produk",
-                    data: products,
-                });
-            } catch (error) {
-                res.status(500).json({
-                    message: error.message || "Gagal mengambil data produk",
-                });
-            }
-        }
+    }
 }
 
 export default new ProductController();

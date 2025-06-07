@@ -13,9 +13,10 @@ router.delete('/:id', authenticate, validateAdmin, ProductController.deleteProdu
 
 // Rute GET biarkan publik (bisa diakses siapa saja)
 router.get('/', ProductController.getAllProducts);
+router.get('/search', ProductController.searchProducts);
 router.get('/:id', ProductController.getProductById);
-router.get('/category/:category', ProductController.getProductByCategory);
-router.get('/name/:name', ProductController.getProductByName);
+
+
 
 /**
  * @swagger

@@ -1,13 +1,13 @@
 import passport from "passport";
 import { Strategy as GoogleStrategy } from "passport-google-oauth20";
-import { User } from "../models/userModel.js"; // Sesuaikan path-nya
+import { User } from "../models/userModel.js"; 
 
 passport.use(
   new GoogleStrategy(
     {
       clientID: process.env.GOOGLE_CLIENT_ID,
       clientSecret: process.env.GOOGLE_CLIENT_SECRET,
-      callbackURL: "/auth/google/callback",
+      callbackURL: "/auth/google/callback", // Pastikan ini sesuai dengan yang ada di Google Cloud Console
     },
     async (accessToken, refreshToken, profile, done) => {
       try {
@@ -17,26 +17,32 @@ passport.use(
           return done(null, existingUser);
         }
 
+        // Saat membuat user baru...
         const newUser = await User.create({
+          googleId: profile.id,
           name: profile.displayName,
           email: profile.emails[0].value,
-          password: "google-oauth",
-          googleId: profile.id,
+          password: "google-oauth", // Password dummy
+          isVerified: true, // <-- TAMBAHKAN BARIS INI
         });
 
         return done(null, newUser);
       } catch (error) {
-        return done(error);
+        return done(error, false); // Beri parameter kedua 'false' untuk menandakan kegagalan
       }
     }
   )
 );
 
-// Required for persistent login sessions
+// Bagian serialize/deserialize tidak perlu diubah
 passport.serializeUser((user, done) => {
   done(null, user.id);
 });
 passport.deserializeUser(async (id, done) => {
-  const user = await User.findByPk(id);
-  done(null, user);
+  try {
+    const user = await User.findByPk(id);
+    done(null, user);
+  } catch (error) {
+    done(error, null);
+  }
 });

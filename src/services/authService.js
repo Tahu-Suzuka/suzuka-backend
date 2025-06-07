@@ -53,39 +53,26 @@ export class AuthService {
     };
   }
   
-    async loginWithGoogle({ email, name, googleId }) {
+async loginWithGoogle({ email, name, googleId }) {
     let user = await User.findOne({ where: { email } });
-    let isNewUser = false;
-
     if (!user) {
-      // Jika user tidak ada, buat user baru yang sudah terverifikasi
+      console.log('--- MEMBUAT USER GOOGLE BARU DENGAN isVerified: true ---'); 
       user = await User.create({
-        googleId, // Simpan googleId
+        googleId,
         email,
         name,
-        password: 'dummypassword_google_user', // Isi dengan password dummy karena tidak akan digunakan
-        isVerified: true, // Langsung set true
-        role: "user" // Pastikan rolenya 'user' bukan 'customer' sesuai model
+        password: 'google-oauth',
+        isVerified: true, // WAJIB TRUE
+        role: "user"
       });
-      isNewUser = true;
     }
 
+    // Kode di bawah ini biarkan saja
     const token = generateJwtToken(user);
-    
     const isProfileComplete = !!(user.address && user.phone);
 
-    return {
-      isNew: isNewUser,
-      token,
-      isProfileComplete, // Kirim status kelengkapan profil
-      user: {
-        id: user.id,
-        email: user.email,
-        name: user.name,
-        role: user.role
-      }
-    };
-  }
+     return { isNew: !user, token, isProfileComplete, user: { id: user.id, email: user.email, name: user.name, role: user.role, isVerified: user.isVerified }};
+}
   
   async verifyOtp({ email, otp }) {
     const user = await User.findOne({ where: { email } });
