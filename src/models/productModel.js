@@ -2,13 +2,13 @@ import { Model, DataTypes } from 'sequelize';
 import { TABLE_NAME_CATEGORIES } from './categoryModel.js';
 import { TABLE_NAME_USERS } from './userModel.js';
 
-const TABLE_NAME = 'products';
+const TABLE_NAME_PRODUCTS = 'products';
 
 class Product extends Model {
     static config(sequelize) {
         return {
             sequelize,
-            tableName: TABLE_NAME,
+            tableName: TABLE_NAME_PRODUCTS,
             modelName: 'Product',
             timestamps: true,
             createdAt: 'createdAt',
@@ -53,14 +53,14 @@ const ProductSchema = {
         userId: {
         field: 'user_id',
         allowNull: false,
-        type: DataTypes.UUID, // Tipe data harus sama dengan primary key di User (UUID)
+        type: DataTypes.UUID, 
         references: {
-            model: TABLE_NAME_USERS, // Nama tabel users
-            key: 'user_id'          // Primary key di tabel users
+            model: TABLE_NAME_USERS,
+            key: 'user_id'
         },
         onUpdate: 'CASCADE',
-        onDelete: 'CASCADE' // Jika admin dihapus, produknya juga terhapus
+        onDelete: 'CASCADE'
     }
 };
 
-export { Product, ProductSchema, TABLE_NAME };
+export { Product, ProductSchema, TABLE_NAME_PRODUCTS };
