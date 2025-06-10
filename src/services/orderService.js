@@ -3,6 +3,7 @@ import { Order } from '../models/orderModel.js';
 import { OrderItem } from '../models/orderItemModel.js';
 import { Product } from '../models/productModel.js';
 import { User } from '../models/userModel.js';
+import { Cart } from '../models/cartModel.js';
 
 export class OrderService {
     async createOrder(userId, orderData) {
@@ -61,6 +62,71 @@ export class OrderService {
 
         } catch (error) {
             // Jika ada kesalahan, batalkan semua perubahan
+            await t.rollback();
+            throw new Error(`Gagal membuat pesanan: ${error.message}`);
+        }
+    }
+
+    async createOrderFromCart(userId, orderData) {
+        const { note, shipPrice = 10000 } = orderData;
+
+        // Ambil semua item dari keranjang user
+        const cartItems = await Cart.findAll({
+            where: { userId },
+            include: ['product']
+        });
+
+        if (!cartItems || cartItems.length === 0) {
+            throw new Error("Keranjang belanja kosong.");
+        }
+
+        const t = await sequelize.transaction();
+
+        try {
+            let totalPriceOfProducts = 0;
+
+            // Validasi dan hitung total harga
+            cartItems.forEach(cartItem => {
+                totalPriceOfProducts += cartItem.product.price * cartItem.quantity;
+            });
+
+            // Buat record di tabel 'Orders'
+            const newOrder = await Order.create({
+                userId,
+                shipPrice,
+                totalPayment: totalPriceOfProducts + shipPrice,
+                note,
+            }, { transaction: t });
+
+            // Buat record di tabel 'OrderItems' untuk setiap item keranjang
+            const orderItemsPromises = cartItems.map(cartItem => {
+                return OrderItem.create({
+                    orderId: newOrder.id,
+                    productId: cartItem.productId,
+                    quantity: cartItem.quantity,
+                    price: cartItem.product.price,
+                }, { transaction: t });
+            });
+
+            await Promise.all(orderItemsPromises);
+
+            // Kosongkan keranjang setelah order berhasil dibuat
+            await Cart.destroy({
+                where: { userId }
+            }, { transaction: t });
+
+            await t.commit();
+
+            // Kembalikan data order lengkap
+            return Order.findByPk(newOrder.id, {
+                include: [{
+                    model: OrderItem,
+                    as: 'items',
+                    include: ['product']
+                }]
+            });
+
+        } catch (error) {
             await t.rollback();
             throw new Error(`Gagal membuat pesanan: ${error.message}`);
         }

@@ -10,10 +10,7 @@ const seedDatabase = async () => {
   try {
     console.log("Memulai proses seeding database...");
 
-    // =================================================================
-    // 1. BUAT ADMIN (Sesuai skrip asli, tidak diubah)
-    // =================================================================
-    console.log("Mengecek dan membuat admin...");
+    console.log("Mengecek dan membuat users...");
     const adminEmail = "suzukatahu@gmail.com";
     let adminUser = await User.findOne({ where: { email: adminEmail } });
 
@@ -31,12 +28,8 @@ const seedDatabase = async () => {
     } else {
       console.log("Admin sudah ada.");
     }
-    const adminId = adminUser.id; // Simpan ID admin untuk produk
+    const adminId = adminUser.id;
 
-    // =================================================================
-    // 2. BUAT USER BIASA (Jack Rochmat)
-    // =================================================================
-    console.log("Mengecek dan membuat user biasa...");
     const userEmail = "jack@suzuka.com";
     let regularUser = await User.findOne({ where: { email: userEmail } });
 
@@ -47,7 +40,7 @@ const seedDatabase = async () => {
         name: "Jack Rochmat",
         email: userEmail,
         password: userPassHash,
-        role: "user", // Role sebagai 'user'
+        role: "user",
         isVerified: true,
       });
       console.log("User 'Jack Rochmat' berhasil dibuat.");
@@ -56,25 +49,22 @@ const seedDatabase = async () => {
     }
 
     // =================================================================
-    // 3. BUAT KATEGORI
+    // 2. BUAT KATEGORI
     // =================================================================
     console.log("Membuat kategori...");
+    // --- PERUBAHAN STRUKTUR KATEGORI ---
     const categoryNames = [
       "Tahu Kuning",
       "Tahu Putih",
       "Tahu Stik",
-      "Tahu Pedas",
-      "Tahu Hijau",
-      "Kerupuk Tahu",
+      "Tahu Varian Rasa", // Untuk Tahu Pedas & Tahu Hijau
+      "Aneka Tahu Olahan", // Untuk Kerupuk Tahu
     ];
 
     const categoryPromises = categoryNames.map((name) => {
       return Category.findOrCreate({
         where: { category_name: name },
-        defaults: {
-          id: uuidv4(),
-          category_name: name,
-        },
+        defaults: { id: uuidv4(), category_name: name },
       });
     });
 
@@ -90,9 +80,10 @@ const seedDatabase = async () => {
     });
 
     // =================================================================
-    // 4. BUAT PRODUK
+    // 3. BUAT PRODUK
     // =================================================================
     console.log("Membuat produk...");
+    // --- PERUBAHAN STRUKTUR PRODUK ---
     const productsData = [
       // Tahu Kuning
       { name: "Tahu Kuning 9x9", category: "Tahu Kuning", price: 12000 },
@@ -105,10 +96,11 @@ const seedDatabase = async () => {
       // Tahu Stik
       { name: "Tahu Stik Putih", category: "Tahu Stik", price: 15000 },
       { name: "Tahu Stik Kuning", category: "Tahu Stik", price: 16000 },
-      // Lainnya
-      { name: "Tahu Pedas", category: "Tahu Pedas", price: 17000 },
-      { name: "Tahu Hijau", category: "Tahu Hijau", price: 15000 },
-      { name: "Kerupuk Tahu", category: "Kerupuk Tahu", price: 10000 },
+      // Tahu Varian Rasa
+      { name: "Tahu Pedas", category: "Tahu Varian Rasa", price: 17000 },
+      { name: "Tahu Hijau", category: "Tahu Varian Rasa", price: 15000 },
+      // Aneka Tahu Olahan
+      { name: "Kerupuk Tahu", category: "Aneka Tahu Olahan", price: 10000 },
     ];
 
     const productPromises = productsData.map((prod) => {
@@ -124,23 +116,23 @@ const seedDatabase = async () => {
           product_name: prod.name,
           description: `Deskripsi lengkap untuk ${prod.name}, dibuat dari bahan berkualitas terbaik.`,
           price: prod.price,
-          image: "https://via.placeholder.com/150", // Gambar placeholder
+          image: "https://via.placeholder.com/150",
           categoryId: categoryId,
-          userId: adminId, // Semua produk dibuat oleh admin
+          userId: adminId,
         },
       });
     });
 
     const createdProductsResult = await Promise.all(productPromises);
     createdProductsResult.forEach((result) => {
-        if(result) {
-            const [product, created] = result;
-            if (created) {
-                console.log(`- Produk '${product.product_name}' berhasil dibuat.`);
-            } else {
-                console.log(`- Produk '${product.product_name}' sudah ada.`);
-            }
+      if (result) {
+        const [product, created] = result;
+        if (created) {
+          console.log(`- Produk '${product.product_name}' berhasil dibuat.`);
+        } else {
+          console.log(`- Produk '${product.product_name}' sudah ada.`);
         }
+      }
     });
 
     console.log("\nProses seeding database berhasil diselesaikan.");

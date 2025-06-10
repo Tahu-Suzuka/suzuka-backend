@@ -4,6 +4,7 @@ import productRoutes from "./productRoute.js";
 import categoryRoutes from "./categoryRoute.js";
 import adminRoutes from "./adminRoute.js";
 import orderRoutes from "./orderRoute.js";
+import cartRoutes from "./cartRoute.js";
 
 function routerApi(app) {
     const router = Router();
@@ -13,6 +14,7 @@ function routerApi(app) {
     router.use("/categories", categoryRoutes);
     router.use("/admin", adminRoutes);
     router.use("/orders", orderRoutes); 
+    router.use("/carts", cartRoutes);
 }
 
 export default routerApi;

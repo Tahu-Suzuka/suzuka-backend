@@ -17,6 +17,19 @@ class OrderController {
         }
     }
 
+    async createOrderFromCart(req, res) {
+        try {
+            const userId = req.user.id;
+            const newOrder = await orderService.createOrderFromCart(userId, req.body);
+            res.status(201).json({
+                message: "Pesanan berhasil dibuat dari keranjang",
+                data: newOrder
+            });
+        } catch (error) {
+            res.status(400).json({ message: error.message });
+        }
+    }
+
     async getUserOrders(req, res) {
         try {
             const userId = req.user.id;

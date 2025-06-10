@@ -3,6 +3,7 @@ import { Product, ProductSchema } from "./productModel.js";
 import { Category, CategorySchema } from "./categoryModel.js";
 import { Order, OrderSchema } from "./orderModel.js";
 import { OrderItem, OrderItemSchema } from "./orderItemModel.js";
+import { Cart, CartSchema } from "./cartModel.js";
 
 const setupModels = (sequelize) => {    
     User.init(UserSchema, User.config(sequelize));
@@ -10,6 +11,7 @@ const setupModels = (sequelize) => {
     Category.init(CategorySchema, Category.config(sequelize));
     Order.init(OrderSchema, Order.config(sequelize));
     OrderItem.init(OrderItemSchema, OrderItem.config(sequelize));
+    Cart.init(CartSchema, Cart.config(sequelize));
 
     Product.belongsTo(Category, { foreignKey: 'categoryId', as: 'category' });
     Category.hasMany(Product, { foreignKey: 'categoryId', as: 'products' });
@@ -28,5 +30,12 @@ const setupModels = (sequelize) => {
     // Product -> OrderItem
     Product.hasMany(OrderItem, { foreignKey: 'productId', as: 'orderItems' });
     OrderItem.belongsTo(Product, { foreignKey: 'productId', as: 'product' });
+
+    // Cart relationships
+    User.hasMany(Cart, { foreignKey: 'userId', as: 'cartItems' });
+    Cart.belongsTo(User, { foreignKey: 'userId', as: 'user' });
+
+    Product.hasMany(Cart, { foreignKey: 'productId', as: 'cartItems' });
+    Cart.belongsTo(Product, { foreignKey: 'productId', as: 'product' });
 }
 export default setupModels;

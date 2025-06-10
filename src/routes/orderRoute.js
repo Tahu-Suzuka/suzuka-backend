@@ -7,6 +7,7 @@ import { validateAdmin } from '../middleware/validateAdmin.js';
 const router = Router();
 
 router.post('/', authenticate, OrderController.createOrder); // Buat pesanan baru
+router.post('/from-cart', authenticate, OrderController.createOrderFromCart); // Buat pesanan dari keranjang
 router.get('/', authenticate, OrderController.getUserOrders); // Lihat riwayat pesanan
 router.get('/:id', authenticate, OrderController.getSingleOrder); // Lihat detail satu pesanan
 
