@@ -5,6 +5,8 @@ import categoryRoutes from "./categoryRoute.js";
 import adminRoutes from "./adminRoute.js";
 import orderRoutes from "./orderRoute.js";
 import cartRoutes from "./cartRoute.js";
+import voucherRoutes from "./voucherRoute.js";
+
 
 function routerApi(app) {
     const router = Router();
@@ -15,6 +17,7 @@ function routerApi(app) {
     router.use("/admin", adminRoutes);
     router.use("/orders", orderRoutes); 
     router.use("/carts", cartRoutes);
+    router.use("/vouchers", voucherRoutes);
 }
 
 export default routerApi;

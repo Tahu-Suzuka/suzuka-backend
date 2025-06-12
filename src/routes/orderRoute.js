@@ -11,6 +11,8 @@ router.post('/from-cart', authenticate, OrderController.createOrderFromCart); //
 router.get('/', authenticate, OrderController.getUserOrders); // Lihat riwayat pesanan
 router.get('/:id', authenticate, OrderController.getSingleOrder); // Lihat detail satu pesanan
 
+router.post('/:id/apply-voucher', authenticate, OrderController.applyVoucher);
+
 // Rute khusus untuk Admin
 router.patch(
     '/:id/status', 

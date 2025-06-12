@@ -23,30 +23,44 @@ export class CartService {
         return { carts, totalPayment };
     }
 
-    async addItemToCart({ userId, productId, quantity }) {
-        const product = await Product.findByPk(productId);
-        if (!product) {
-            throw new Error('Produk tidak ditemukan');
-        }
+      async addItemToCart({ userId, items }) {
+        const addedItems = [];
 
-        // Menggunakan model Cart
-        const existingItem = await Cart.findOne({
-            where: { userId, productId },
-        });
+        // Gunakan for...of agar bisa menggunakan await di dalam loop
+        for (const item of items) {
+            const { productId, quantity } = item;
 
-        if (existingItem) {
-            existingItem.quantity += quantity;
-            await existingItem.save();
-            return existingItem;
-        } else {
-            // Menggunakan model Cart
-            const newItem = await Cart.create({
-                userId,
-                productId,
-                quantity,
+            if (!productId || !quantity) {
+                // Lewati item yang tidak valid atau lempar error
+                continue; 
+            }
+
+            const product = await Product.findByPk(productId);
+            if (!product) {
+                 // Anda bisa memilih untuk mengabaikan produk yang tidak ada atau mengembalikan error
+                console.warn(`Produk dengan ID ${productId} tidak ditemukan, item dilewati.`);
+                continue;
+            }
+
+            const existingItem = await Cart.findOne({
+                where: { userId, productId },
             });
-            return newItem;
+
+            if (existingItem) {
+                existingItem.quantity += quantity;
+                await existingItem.save();
+                addedItems.push(existingItem);
+            } else {
+                const newItem = await Cart.create({
+                    userId,
+                    productId,
+                    quantity,
+                });
+                addedItems.push(newItem);
+            }
         }
+        
+        return addedItems;
     }
     
     // Parameter diubah dari cartItemId menjadi cartId

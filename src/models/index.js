@@ -4,6 +4,7 @@ import { Category, CategorySchema } from "./categoryModel.js";
 import { Order, OrderSchema } from "./orderModel.js";
 import { OrderItem, OrderItemSchema } from "./orderItemModel.js";
 import { Cart, CartSchema } from "./cartModel.js";
+import { Voucher, VoucherSchema } from "./voucherModel.js";
 
 const setupModels = (sequelize) => {    
     User.init(UserSchema, User.config(sequelize));
@@ -12,6 +13,7 @@ const setupModels = (sequelize) => {
     Order.init(OrderSchema, Order.config(sequelize));
     OrderItem.init(OrderItemSchema, OrderItem.config(sequelize));
     Cart.init(CartSchema, Cart.config(sequelize));
+    Voucher.init(VoucherSchema, Voucher.config(sequelize));
 
     Product.belongsTo(Category, { foreignKey: 'categoryId', as: 'category' });
     Category.hasMany(Product, { foreignKey: 'categoryId', as: 'products' });
@@ -37,5 +39,9 @@ const setupModels = (sequelize) => {
 
     Product.hasMany(Cart, { foreignKey: 'productId', as: 'cartItems' });
     Cart.belongsTo(Product, { foreignKey: 'productId', as: 'product' });
+
+    // Voucher relationships
+    User.hasMany(Voucher, { foreignKey: 'userId', as: 'vouchers' });
+    Voucher.belongsTo(User, { foreignKey: 'userId', as: 'user' });
 }
 export default setupModels;

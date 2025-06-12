@@ -4,6 +4,9 @@ import { OrderItem } from '../models/orderItemModel.js';
 import { Product } from '../models/productModel.js';
 import { User } from '../models/userModel.js';
 import { Cart } from '../models/cartModel.js';
+import { VoucherService } from './voucherService.js';
+
+const voucherService = new VoucherService();
 
 export class OrderService {
     async createOrder(userId, orderData) {
@@ -24,57 +27,44 @@ export class OrderService {
                     throw new Error(`Produk dengan ID ${item.productId} tidak ditemukan.`);
                 }
                 totalPriceOfProducts += product.price * item.quantity;
-                return { ...item, price: product.price }; // Simpan harga saat ini
+                return { ...item, price: product.price };
             });
 
             const itemsWithPrice = await Promise.all(productPromises);
             
-            // 2. Buat record di tabel 'Orders'
             const newOrder = await Order.create({
                 userId,
+                // --- MODIFIKASI: Tambahkan subtotal ---
+                subtotal: totalPriceOfProducts,
                 shipPrice,
                 totalPayment: totalPriceOfProducts + shipPrice,
                 note,
+                orderStatus: 'Diproses', // Menggunakan status default dari model Anda
             }, { transaction: t });
 
-            // 3. Buat record di tabel 'OrderItems' untuk setiap produk
+            // ... (sisa fungsi tidak berubah)
             const orderItemsPromises = itemsWithPrice.map(item => {
                 return OrderItem.create({
                     orderId: newOrder.id,
                     productId: item.productId,
                     quantity: item.quantity,
-                    price: item.price, // Gunakan harga yang sudah divalidasi
+                    price: item.price,
                 }, { transaction: t });
             });
             
             await Promise.all(orderItemsPromises);
-
             await t.commit();
-            
-            // Kembalikan data order lengkap
-            return Order.findByPk(newOrder.id, {
-                include: [{
-                    model: OrderItem,
-                    as: 'items',
-                    include: ['product']
-                }]
-            });
+            return Order.findByPk(newOrder.id, { include: [{ model: OrderItem, as: 'items', include: ['product'] }] });
 
         } catch (error) {
-            // Jika ada kesalahan, batalkan semua perubahan
             await t.rollback();
             throw new Error(`Gagal membuat pesanan: ${error.message}`);
         }
     }
 
-    async createOrderFromCart(userId, orderData) {
-        const { note, shipPrice = 10000 } = orderData;
-
-        // Ambil semua item dari keranjang user
-        const cartItems = await Cart.findAll({
-            where: { userId },
-            include: ['product']
-        });
+      async createOrderFromCart(userId, orderData) {
+        const { note, shipPrice = 10000, voucherCode } = orderData;
+        const cartItems = await Cart.findAll({ where: { userId }, include: ['product'] });
 
         if (!cartItems || cartItems.length === 0) {
             throw new Error("Keranjang belanja kosong.");
@@ -83,22 +73,48 @@ export class OrderService {
         const t = await sequelize.transaction();
 
         try {
-            let totalPriceOfProducts = 0;
-
-            // Validasi dan hitung total harga
+            let subtotal = 0;
             cartItems.forEach(cartItem => {
-                totalPriceOfProducts += cartItem.product.price * cartItem.quantity;
+                subtotal += cartItem.product.price * cartItem.quantity;
             });
 
-            // Buat record di tabel 'Orders'
+            let discountAmount = 0;
+            if (voucherCode) {
+                const voucher = await voucherService.getAndValidateVoucher(voucherCode);
+                if (subtotal < voucher.minPurchase) {
+                    throw new Error(`Minimum pembelian untuk voucher ${voucherCode} tidak terpenuhi.`);
+                }
+                switch (voucher.type) {
+                    case 'POTONGAN_HARGA':
+                        discountAmount = voucher.value;
+                        break;
+                    case 'PERSENTASE':
+                        let calculatedDiscount = subtotal * (voucher.value / 100);
+                        discountAmount = voucher.maxDiscount && calculatedDiscount > voucher.maxDiscount 
+                            ? voucher.maxDiscount 
+                            : calculatedDiscount;
+                        break;
+                    case 'POTONGAN_ONGKIR':
+                        discountAmount = voucher.value > shipPrice ? shipPrice : voucher.value;
+                        break;
+                }
+            }
+
+            let totalPayment = (subtotal + shipPrice) - discountAmount;
+            if (totalPayment < 0) {
+                totalPayment = 0;
+            }
+
             const newOrder = await Order.create({
                 userId,
+                subtotal,
                 shipPrice,
-                totalPayment: totalPriceOfProducts + shipPrice,
+                discountAmount,
+                voucherCode: voucherCode || null,
+                totalPayment,
                 note,
             }, { transaction: t });
 
-            // Buat record di tabel 'OrderItems' untuk setiap item keranjang
             const orderItemsPromises = cartItems.map(cartItem => {
                 return OrderItem.create({
                     orderId: newOrder.id,
@@ -109,15 +125,9 @@ export class OrderService {
             });
 
             await Promise.all(orderItemsPromises);
-
-            // Kosongkan keranjang setelah order berhasil dibuat
-            await Cart.destroy({
-                where: { userId }
-            }, { transaction: t });
-
+            await Cart.destroy({ where: { userId } }, { transaction: t });
             await t.commit();
 
-            // Kembalikan data order lengkap
             return Order.findByPk(newOrder.id, {
                 include: [{
                     model: OrderItem,
@@ -173,4 +183,60 @@ export class OrderService {
         await order.save();
         return order;
     }
+
+    //   async applyVoucherToOrder(orderId, voucherCode, userId) {
+    //     const order = await Order.findOne({ where: { id: orderId, userId: userId } });
+    //     if (!order) {
+    //         throw new Error("Pesanan tidak ditemukan.");
+    //     }
+
+    //     // Gunakan status 'Diproses' sesuai model Anda
+    //     if (order.orderStatus !== 'Diproses') {
+    //         throw new Error("Voucher hanya bisa diterapkan pada pesanan yang sedang diproses.");
+    //     }
+
+    //     const voucher = await voucherService.getAndValidateVoucher(voucherCode);
+
+    //     if (order.subtotal < voucher.minPurchase) {
+    //         throw new Error(`Minimum pembelian untuk voucher ini adalah Rp ${voucher.minPurchase}`);
+    //     }
+
+    //     let discount = 0;
+    //     let shippingDiscount = 0;
+
+    //     switch (voucher.type) {
+    //         case 'POTONGAN_HARGA':
+    //             discount = voucher.value;
+    //             break;
+    //         case 'PERSENTASE':
+    //             discount = order.subtotal * (voucher.value / 100);
+    //             if (voucher.maxDiscount && discount > voucher.maxDiscount) {
+    //                 discount = voucher.maxDiscount;
+    //             }
+    //             break;
+    //         case 'POTONGAN_ONGKIR':
+    //             shippingDiscount = voucher.value;
+    //             if (shippingDiscount > order.shipPrice) {
+    //                 shippingDiscount = order.shipPrice;
+    //             }
+    //             break;
+    //         default:
+    //             throw new Error("Tipe voucher tidak dikenal.");
+    //     }
+        
+    //     // Update field di order
+    //     order.voucherCode = voucher.code;
+    //     order.discountAmount = discount;
+        
+    //     // Hitung ulang totalPayment
+    //     const finalShipPrice = order.shipPrice - shippingDiscount;
+    //     order.totalPayment = (order.subtotal - order.discountAmount) + finalShipPrice;
+
+    //     if (order.totalPayment < 0) {
+    //         order.totalPayment = 0;
+    //     }
+
+    //    await order.save();
+    //    return order
+    // }
 }

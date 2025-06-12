@@ -73,6 +73,27 @@ class OrderController {
             res.status(404).json({ message: error.message });
         }
     }
+
+      async applyVoucher(req, res) {
+        try {
+            const { id: orderId } = req.params;
+            const { voucherCode } = req.body;
+            const userId = req.user.id;
+
+            if (!voucherCode) {
+                 return res.status(400).json({ message: "Kode voucher dibutuhkan." });
+            }
+
+            const updatedOrder = await orderService.applyVoucherToOrder(orderId, voucherCode, userId);
+
+            res.status(200).json({
+                message: "Voucher berhasil diterapkan pada pesanan",
+                data: updatedOrder,
+            });
+        } catch (error) {
+            res.status(400).json({ message: error.message || "Gagal menerapkan voucher." });
+        }
+    }
 }
 
 export default new OrderController();

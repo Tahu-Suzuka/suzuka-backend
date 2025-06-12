@@ -13,18 +13,18 @@ class CartController {
         }
     }
 
-    async addItem(req, res) {
+     async addItem(req, res) {
         try {
             const userId = req.user.id;
-            const { productId, quantity } = req.body;
+            const { items } = req.body;
 
-            if (!productId || !quantity) {
-                return res.status(400).json({ messa9ge: 'productId and quantity are required' });
+            if (!Array.isArray(items) || items.length === 0) {
+                return res.status(400).json({ message: 'Input harus berupa array "items" yang tidak kosong.' });
             }
-            const item = await cartService.addItemToCart({ userId, productId, quantity });
-            res.status(201).json({ message: 'Item berhasil ditambahkan ke keranjang', data: item });
+
+            const newItems = await cartService.addItemToCart({ userId, items });
+            res.status(201).json({ message: 'Item berhasil ditambahkan ke keranjang', data: newItems });
         } catch (error) {
-            
             res.status(400).json({ message: error.message });
         }
     }

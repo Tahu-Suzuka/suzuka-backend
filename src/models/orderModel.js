@@ -34,21 +34,39 @@ const OrderSchema = {
             key: 'user_id',
         },
     },
-    orderStatus: {
-        field: 'order_status',
+
+    subtotal: {
+        field: 'subtotal',
         allowNull: false,
-        type: DataTypes.ENUM('Diproses', 'Dikirim', 'Selesai', 'Dibatalkan'),
-        defaultValue: 'Diproses',
+        type: DataTypes.FLOAT,
     },
     shipPrice: {
         field: 'ship_price',
         allowNull: false,
         type: DataTypes.FLOAT,
     },
+
+    discountAmount: {
+        field: 'discount_amount',
+        allowNull: false,
+        type: DataTypes.FLOAT,
+        defaultValue: 0,
+    },
+    voucherCode: {
+        field: 'voucher_code',
+        allowNull: true,
+        type: DataTypes.STRING,
+    },
     totalPayment: {
         field: 'total_payment',
         allowNull: false,
         type: DataTypes.FLOAT,
+    },
+    orderStatus: {
+        field: 'order_status',
+        allowNull: false,
+        type: DataTypes.ENUM('Diproses', 'Dikirim', 'Selesai', 'Dibatalkan'),
+        defaultValue: 'Diproses',
     },
     note: {
         type: DataTypes.TEXT,
