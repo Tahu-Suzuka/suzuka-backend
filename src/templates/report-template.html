@@ -1,0 +1,54 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8" />
+    <title>Laporan Pesanan</title>
+    <style>
+        body { font-family: 'Helvetica Neue', 'Helvetica', Helvetica, Arial, sans-serif; color: #555; }
+        .invoice-box { max-width: 800px; margin: auto; padding: 30px; border: 1px solid #eee; box-shadow: 0 0 10px rgba(0, 0, 0, 0.15); font-size: 16px; line-height: 24px; }
+        .header { text-align: center; margin-bottom: 20px; }
+        .header h1 { margin: 0; }
+        .summary { margin-bottom: 30px; padding: 10px; background-color: #f9f9f9; border: 1px solid #eee; }
+        .summary p { margin: 5px 0; }
+        table { width: 100%; line-height: inherit; text-align: left; border-collapse: collapse; }
+        table td { padding: 5px; vertical-align: top; }
+        table tr.heading td { background: #eee; border-bottom: 1px solid #ddd; font-weight: bold; }
+        table tr.item td { border-bottom: 1px solid #eee; }
+        .text-right { text-align: right; }
+    </style>
+</head>
+<body>
+    <div class="invoice-box">
+        <div class="header">
+            <h1>Laporan Pesanan Tahu Suzuka</h1>
+            <p>Periode: {{report.startDate}} - {{report.endDate}}</p>
+        </div>
+
+        <div class="summary">
+            <h2>Ringkasan Laporan</h2>
+            <p><strong>Total Pesanan:</strong> {{report.totalOrders}}</p>
+            <p><strong>Total Pendapatan:</strong> {{report.totalRevenue}}</p>
+        </div>
+
+        <h2>Detail Pesanan</h2>
+        <table>
+            <tr class="heading">
+                <td>ID Pesanan</td>
+                <td>Tanggal</td>
+                <td>Pelanggan</td>
+                <td>Status</td>
+                <td class="text-right">Total Bayar</td>
+            </tr>
+            {{#each report.orders}}
+            <tr class="item">
+                <td>{{this.id}}</td>
+                <td>{{this.orderDate}}</td>
+                <td>{{this.user.name}}</td>
+                <td>{{this.orderStatus}}</td>
+                <td class="text-right">{{this.totalPayment}}</td>
+            </tr>
+            {{/each}}
+        </table>
+    </div>
+</body>
+</html>
