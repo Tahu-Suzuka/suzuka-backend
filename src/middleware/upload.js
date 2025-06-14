@@ -22,11 +22,10 @@ const imageFilter = (req, file, cb) => {
 const profileStorage = multer.diskStorage({
   destination: (req, file, cb) => {
     const dir = 'public/images/profiles';
-    ensureDir(dir); // Pastikan direktori ada
+    ensureDir(dir);
     cb(null, dir);
   },
   filename: (req, file, cb) => {
-    // Nama file: profile-<userId>-<timestamp>.<ext>
     const userId = req.user.id;
     const timestamp = Date.now();
     const extension = path.extname(file.originalname);
@@ -38,25 +37,45 @@ const profileStorage = multer.diskStorage({
 const productStorage = multer.diskStorage({
   destination: (req, file, cb) => {
     const dir = 'public/images/products';
-    ensureDir(dir); // Pastikan direktori ada
+    ensureDir(dir);
     cb(null, dir);
   },
   filename: (req, file, cb) => {
-    // Nama file: product-<timestamp>.<ext>
     const timestamp = Date.now();
     const extension = path.extname(file.originalname);
     cb(null, `product-${timestamp}${extension}`);
   },
 });
 
+const reviewStorage = multer.diskStorage({
+  destination: (req, file, cb) => {
+    const dir = 'public/images/reviews'; // Simpan di folder terpisah
+    ensureDir(dir);
+    cb(null, dir);
+  },
+  filename: (req, file, cb) => {
+
+    const timestamp = Date.now();
+    const extension = path.extname(file.originalname);
+    cb(null, `review-${timestamp}${extension}`);
+  },
+});
+
+
 export const uploadProfile = multer({
   storage: profileStorage,
   fileFilter: imageFilter,
-  limits: { fileSize: 2 * 1024 * 1024 }, // Limit 1MB
+  limits: { fileSize: 2 * 1024 * 1024 }, // Limit 2MB (Anda sebelumnya menulis 1MB)
 });
 
 export const uploadProduct = multer({
   storage: productStorage,
   fileFilter: imageFilter,
-  limits: { fileSize: 5 * 1024 * 1024 }, // Limit 2MB
+  limits: { fileSize: 5 * 1024 * 1024 }, // Limit 5MB (Anda sebelumnya menulis 2MB)
+});
+
+export const uploadReview = multer({
+  storage: reviewStorage,
+  fileFilter: imageFilter,
+  limits: { fileSize: 2 * 1024 * 1024 }, // Limit 2MB untuk gambar ulasan
 });

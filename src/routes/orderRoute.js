@@ -3,6 +3,7 @@ import { Router } from 'express';
 import OrderController from '../controllers/orderController.js';
 import { authenticate } from '../middleware/auth.js';
 import { validateAdmin } from '../middleware/validateAdmin.js';
+import reviewRouter from './reviewRoute.js';
 
 const router = Router();
 
@@ -20,5 +21,7 @@ router.patch(
     validateAdmin, 
     OrderController.updateOrderStatus
 ); // Update status pesanan
+
+router.use('/:orderId/reviews', authenticate, reviewRouter); 
 
 export default router;
