@@ -13,17 +13,13 @@ config();
 const app = express();
 const port = process.env.PORT;
 
-// Helper untuk __dirname di ES Modules
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
-// Inisialisasi Passport
 app.use(passport.initialize());
 
-// Middleware untuk parsing JSON
 app.use(json());
 
-// --- TAMBAHKAN INI UNTUK MENYAJIKAN FILE STATIS ---
 app.use(express.static(path.join(__dirname, 'public')));
 // --------------------------------------------------
 

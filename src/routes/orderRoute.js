@@ -12,7 +12,16 @@ router.post('/from-cart', authenticate, OrderController.createOrderFromCart); //
 router.get('/', authenticate, OrderController.getUserOrders); // Lihat riwayat pesanan
 router.get('/:id', authenticate, OrderController.getSingleOrder); // Lihat detail satu pesanan
 
-router.post('/:id/apply-voucher', authenticate, OrderController.applyVoucher);
+// Rute untuk Midtrans
+router.post(
+    '/:orderId/create-payment',
+    authenticate,
+    OrderController.createMidtransTransaction
+);
+
+router.post('/midtrans-notification', OrderController.handleMidtransNotification);
+
+
 
 // Rute khusus untuk Admin
 router.patch(
@@ -22,6 +31,9 @@ router.patch(
     OrderController.updateOrderStatus
 ); // Update status pesanan
 
-router.use('/:orderId/reviews', authenticate, reviewRouter); 
+router.use('/:orderId/reviews', reviewRouter); 
+
+// Testing routes - bisa dihapus setelah masalah teratasi
+
 
 export default router;

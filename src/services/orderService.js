@@ -5,11 +5,22 @@ import { Product } from '../models/productModel.js';
 import { User } from '../models/userModel.js';
 import { Cart } from '../models/cartModel.js';
 import { VoucherService } from './voucherService.js';
+import snap from '../utils/midtrans.js';
 
 const voucherService = new VoucherService();
 
-export class OrderService {
+class OrderService {
     async createOrder(userId, orderData) {
+        const user = await User.findByPk(userId);
+
+        if (!user) {
+            throw new Error("User tidak ditemukan.");
+        }
+
+        if (!user.address || !user.phone) {
+            throw new Error("Harap lengkapi alamat dan nomor HP Anda di profil sebelum melanjutkan checkout.");
+        }
+
         const { items, note, shipPrice = 10000 } = orderData; 
 
         if (!items || items.length === 0) {
@@ -34,15 +45,12 @@ export class OrderService {
             
             const newOrder = await Order.create({
                 userId,
-                // --- MODIFIKASI: Tambahkan subtotal ---
                 subtotal: totalPriceOfProducts,
                 shipPrice,
                 totalPayment: totalPriceOfProducts + shipPrice,
                 note,
-                orderStatus: 'Diproses', // Menggunakan status default dari model Anda
             }, { transaction: t });
 
-            // ... (sisa fungsi tidak berubah)
             const orderItemsPromises = itemsWithPrice.map(item => {
                 return OrderItem.create({
                     orderId: newOrder.id,
@@ -63,6 +71,16 @@ export class OrderService {
     }
 
       async createOrderFromCart(userId, orderData) {
+        const user = await User.findByPk(userId);
+        
+        if (!user) {
+            throw new Error("User tidak ditemukan.");
+        }
+
+        if (!user.address || !user.phone) {
+            throw new Error("Harap lengkapi alamat dan nomor HP Anda di profil sebelum melanjutkan checkout.");
+        }
+
         const { note, shipPrice = 10000, voucherCode } = orderData;
         const cartItems = await Cart.findAll({ where: { userId }, include: ['product'] });
 
@@ -182,61 +200,57 @@ export class OrderService {
         order.orderStatus = status;
         await order.save();
         return order;
+    }     
+    
+ async createMidtransTransaction(orderId, userId) {
+        const order = await Order.findOne({ where: { id: orderId, userId: userId }});
+        if (!order) throw new Error("Pesanan tidak ditemukan atau Anda tidak memiliki akses.");
+        if (order.orderStatus !== 'Menunggu Pembayaran') throw new Error("Pesanan ini sudah diproses atau dibayar.");
+
+        const user = await User.findByPk(userId);
+        if (!user) throw new Error("User tidak ditemukan.");
+
+        const parameter = {
+            transaction_details: {
+                order_id: order.id,
+                gross_amount: Math.round(order.totalPayment)
+            },
+            customer_details: {
+                first_name: user.name,
+                email: user.email,
+                phone: user.phone
+            },
+        };
+
+        const transaction = await snap.createTransaction(parameter);
+        return transaction.token;
     }
 
-    //   async applyVoucherToOrder(orderId, voucherCode, userId) {
-    //     const order = await Order.findOne({ where: { id: orderId, userId: userId } });
-    //     if (!order) {
-    //         throw new Error("Pesanan tidak ditemukan.");
-    //     }
+    async handlePaymentNotification(notificationPayload) {
+        try {
+            const statusResponse = await snap.transaction.notification(notificationPayload);
+            const orderId = statusResponse.order_id;
+            const transactionStatus = statusResponse.transaction_status;
+            const fraudStatus = statusResponse.fraud_status;
 
-    //     // Gunakan status 'Diproses' sesuai model Anda
-    //     if (order.orderStatus !== 'Diproses') {
-    //         throw new Error("Voucher hanya bisa diterapkan pada pesanan yang sedang diproses.");
-    //     }
+            const order = await Order.findByPk(orderId);
+            if (!order) {
+                console.error(`Webhook Gagal: Pesanan dengan ID ${orderId} tidak ditemukan.`);
+                return;
+            }
 
-    //     const voucher = await voucherService.getAndValidateVoucher(voucherCode);
-
-    //     if (order.subtotal < voucher.minPurchase) {
-    //         throw new Error(`Minimum pembelian untuk voucher ini adalah Rp ${voucher.minPurchase}`);
-    //     }
-
-    //     let discount = 0;
-    //     let shippingDiscount = 0;
-
-    //     switch (voucher.type) {
-    //         case 'POTONGAN_HARGA':
-    //             discount = voucher.value;
-    //             break;
-    //         case 'PERSENTASE':
-    //             discount = order.subtotal * (voucher.value / 100);
-    //             if (voucher.maxDiscount && discount > voucher.maxDiscount) {
-    //                 discount = voucher.maxDiscount;
-    //             }
-    //             break;
-    //         case 'POTONGAN_ONGKIR':
-    //             shippingDiscount = voucher.value;
-    //             if (shippingDiscount > order.shipPrice) {
-    //                 shippingDiscount = order.shipPrice;
-    //             }
-    //             break;
-    //         default:
-    //             throw new Error("Tipe voucher tidak dikenal.");
-    //     }
-        
-    //     // Update field di order
-    //     order.voucherCode = voucher.code;
-    //     order.discountAmount = discount;
-        
-    //     // Hitung ulang totalPayment
-    //     const finalShipPrice = order.shipPrice - shippingDiscount;
-    //     order.totalPayment = (order.subtotal - order.discountAmount) + finalShipPrice;
-
-    //     if (order.totalPayment < 0) {
-    //         order.totalPayment = 0;
-    //     }
-
-    //    await order.save();
-    //    return order
-    // }
+            if (order.orderStatus === 'Menunggu Pembayaran') {
+                if ((transactionStatus === 'capture' && fraudStatus === 'accept') || transactionStatus === 'settlement') {
+                    await order.update({ orderStatus: 'Dibayar' });
+                } else if (transactionStatus === 'cancel' || transactionStatus === 'expire' || transactionStatus === 'deny') {
+                    await order.update({ orderStatus: 'Dibatalkan' });
+                }
+            }
+        } catch (error) {
+           console.error("Error saat memproses notifikasi Midtrans:", error.message);
+            throw error;
+        }
+    }
 }
+
+export { OrderService };

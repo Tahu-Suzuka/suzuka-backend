@@ -61,7 +61,7 @@ class OrderController {
         try {
             const { id } = req.params;
             const { status } = req.body;
-            if (!['Diproses', 'Dikirim', 'Selesai', 'Dibatalkan'].includes(status)) {
+             if (!['Menunggu Pembayaran', 'Dibayar', 'Diproses', 'Dikirim', 'Selesai', 'Dibatalkan'].includes(status)) {
                 return res.status(400).json({ message: "Status tidak valid." });
             }
             const updatedOrder = await orderService.updateOrderStatus(id, status);
@@ -94,6 +94,31 @@ class OrderController {
             res.status(400).json({ message: error.message || "Gagal menerapkan voucher." });
         }
     }
+
+    async createMidtransTransaction(req, res) {
+    try {
+        const { orderId } = req.params;
+        const userId = req.user.id;
+        
+        const transactionToken = await orderService.createMidtransTransaction(orderId, userId);
+
+        res.status(200).json({
+            message: "Transaction token berhasil dibuat",
+            token: transactionToken
+        });
+    } catch (error) {
+        res.status(404).json({ message: error.message });
+    }
+}    
+  async handleMidtransNotification(req, res) {
+        try {
+            await orderService.handlePaymentNotification(req.body);
+            res.status(200).json({ status: "ok", message: "Notification processed" });
+        } catch (error) {
+            res.status(500).json({ status: "error", message: error.message });
+        }
+    }
+
 }
 
 export default new OrderController();

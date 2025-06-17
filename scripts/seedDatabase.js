@@ -40,6 +40,8 @@ const seedDatabase = async () => {
         name: "Jack Rochmat",
         email: userEmail,
         password: userPassHash,
+        address: "Jl. Tahu No. 123, Bandung",
+        phone: "081234567890",
         role: "user",
         isVerified: true,
       });

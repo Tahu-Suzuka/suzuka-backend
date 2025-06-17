@@ -65,8 +65,15 @@ const OrderSchema = {
     orderStatus: {
         field: 'order_status',
         allowNull: false,
-        type: DataTypes.ENUM('Diproses', 'Dikirim', 'Selesai', 'Dibatalkan'),
-        defaultValue: 'Diproses',
+        type: DataTypes.ENUM(
+            'Menunggu Pembayaran', 
+            'Dibayar', 
+            'Diproses', 
+            'Dikirim', 
+            'Selesai', 
+            'Dibatalkan'
+        ),
+        defaultValue: 'Menunggu Pembayaran',
     },
     note: {
         type: DataTypes.TEXT,
