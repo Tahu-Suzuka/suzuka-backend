@@ -8,8 +8,8 @@ import ReviewController from '../controllers/reviewController.js'; // Impor Revi
 const router = Router();
 
 // Terapkan middleware 'authenticate' dan 'validateAdmin' pada rute yang perlu diamankan
-router.post('/', authenticate, validateAdmin, uploadProduct.single('product_image'), ProductController.createProduct);
-router.put('/:id', authenticate, validateAdmin, uploadProduct.single('product_image'), ProductController.updateProduct);
+router.post('/', authenticate, validateAdmin, uploadProduct, ProductController.createProduct);
+router.put('/:id', authenticate, validateAdmin, uploadProduct, ProductController.updateProduct);
 router.delete('/:id', authenticate, validateAdmin, ProductController.deleteProduct);
 
 // Rute GET biarkan publik (bisa diakses siapa saja)

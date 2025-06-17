@@ -9,21 +9,25 @@ class ReviewController {
             const { orderId } = req.params;
             const { productId, rating, comment } = req.body;
 
-            // Ambil path gambar jika ada
-            let imagePath = null;
-            if (req.file) {
-                // Sesuaikan path agar bisa diakses dari frontend
-                imagePath = req.file.path.replace(/\\/g, "/").replace("public/", "/");
-            }
-            
-            const newReview = await reviewService.createReview({
+            // LANGKAH 1: Deklarasikan dan inisialisasi objek 'data' di sini
+            const data = {
                 userId,
                 orderId,
                 productId,
                 rating,
                 comment,
-                imagePath
-            });
+                image1: null, 
+                image2: null, 
+            };
+
+            if (req.files && req.files.length > 0) {
+                data.image1 = req.files[0].path.replace(/\\/g, "/").replace("public/", "/");
+                if (req.files[1]) {
+                    data.image2 = req.files[1].path.replace(/\\/g, "/").replace("public/", "/");
+                }
+            }
+            
+            const newReview = await reviewService.createReview(data);
 
             res.status(201).json({
                 message: "Ulasan Anda berhasil dikirim. Terima kasih!",

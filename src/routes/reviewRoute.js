@@ -9,7 +9,7 @@ const router = Router({ mergeParams: true }); // mergeParams penting untuk dapat
 router.post(
     '/',
     authenticate,
-    uploadReview.single('review_image'),
+    uploadReview,
     ReviewController.createReview
 );
 

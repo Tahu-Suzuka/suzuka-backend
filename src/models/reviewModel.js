@@ -38,9 +38,13 @@ const ReviewSchema = {
         allowNull: true,
         type: DataTypes.TEXT
     },
-    image: {
+    image1: {
+        type: DataTypes.STRING,
         allowNull: true,
-        type: DataTypes.STRING
+    },
+    image2: {
+        type: DataTypes.STRING,
+        allowNull: true,
     },
     userId: {
         field: 'user_id',

@@ -36,8 +36,25 @@ const ProductSchema = {
         allowNull: false,
         type: DataTypes.FLOAT,
     },
-    image: {
-        type: DataTypes.STRING
+       mainImage: {
+        field: 'main_image',
+        type: DataTypes.STRING,
+        allowNull: true,
+    },
+    additionalImage1: {
+        field: 'additional_image_1',
+        type: DataTypes.STRING,
+        allowNull: true,
+    },
+    additionalImage2: {
+        field: 'additional_image_2',
+        type: DataTypes.STRING,
+        allowNull: true,
+    },
+    additionalImage3: {
+        field: 'additional_image_3',
+        type: DataTypes.STRING,
+        allowNull: true,
     },
         categoryId: {
         field: 'category_id',

@@ -88,21 +88,22 @@ const seedDatabase = async () => {
     // --- PERUBAHAN STRUKTUR PRODUK ---
     const productsData = [
       // Tahu Kuning
-      { name: "Tahu Kuning 9x9", category: "Tahu Kuning", price: 12000 },
-      { name: "Tahu Kuning 9x10", category: "Tahu Kuning", price: 13000 },
-      { name: "Tahu Kuning 10x11", category: "Tahu Kuning", price: 14000 },
+      { name: "Tahu Kuning Kecil", category: "Tahu Kuning", price: 12000 }, //9x9
+      { name: "Tahu Kuning Normal", category: "Tahu Kuning", price: 13000 }, //10x10
+      { name: "Tahu Kuning Besar", category: "Tahu Kuning", price: 14000 }, //10x11
       // Tahu Putih
-      { name: "Tahu Putih 9x9", category: "Tahu Putih", price: 11000 },
-      { name: "Tahu Putih 9x10", category: "Tahu Putih", price: 12000 },
-      { name: "Tahu Putih 10x11", category: "Tahu Putih", price: 13000 },
+      { name: "Tahu Putih Kecil", category: "Tahu Putih", price: 12000 }, //9x9
+      { name: "Tahu Putih Normal", category: "Tahu Putih", price: 13000 }, //10x10
+      { name: "Tahu Putih Besar", category: "Tahu Putih", price: 14000 }, //10x11
       // Tahu Stik
-      { name: "Tahu Stik Putih", category: "Tahu Stik", price: 15000 },
-      { name: "Tahu Stik Kuning", category: "Tahu Stik", price: 16000 },
+      { name: "Tahu Stik Putih", category: "Tahu Stik", price: 12500 },
+      { name: "Tahu Stik Kuning", category: "Tahu Stik", price: 12500 },
       // Tahu Varian Rasa
-      { name: "Tahu Pedas", category: "Tahu Varian Rasa", price: 17000 },
-      { name: "Tahu Hijau", category: "Tahu Varian Rasa", price: 15000 },
+      { name: "Tahu Pedas", category: "Tahu Varian Rasa", price: 13000 }, //10x10 Normal
+      { name: "Tahu Hijau", category: "Tahu Varian Rasa", price: 13000 }, //10x10 Normal
       // Aneka Tahu Olahan
-      { name: "Kerupuk Tahu", category: "Aneka Tahu Olahan", price: 10000 },
+      { name: "Kerupuk Tahu 250gr", category: "Aneka Tahu Olahan", price: 15000 }, //250gr
+      { name: "Kerupuk Tahu 500gr", category: "Aneka Tahu Olahan", price: 25000 }, //500gr
     ];
 
     const productPromises = productsData.map((prod) => {
@@ -118,7 +119,7 @@ const seedDatabase = async () => {
           product_name: prod.name,
           description: `Deskripsi lengkap untuk ${prod.name}, dibuat dari bahan berkualitas terbaik.`,
           price: prod.price,
-          image: "https://via.placeholder.com/150",
+          main_image: "https://via.placeholder.com/150",
           categoryId: categoryId,
           userId: adminId,
         },

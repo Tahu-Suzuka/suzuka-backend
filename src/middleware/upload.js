@@ -71,11 +71,14 @@ export const uploadProfile = multer({
 export const uploadProduct = multer({
   storage: productStorage,
   fileFilter: imageFilter,
-  limits: { fileSize: 5 * 1024 * 1024 }, // Limit 5MB (Anda sebelumnya menulis 2MB)
-});
+  limits: { fileSize: 5 * 1024 * 1024 },
+}).fields([
+    { name: 'mainImage', maxCount: 1 },
+    { name: 'additionalImages', maxCount: 3 }
+]);
 
 export const uploadReview = multer({
   storage: reviewStorage,
   fileFilter: imageFilter,
-  limits: { fileSize: 2 * 1024 * 1024 }, // Limit 2MB untuk gambar ulasan
-});
+  limits: { fileSize: 2 * 1024 * 1024 },
+}).array('review_images', 2); 
