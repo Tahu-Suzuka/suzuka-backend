@@ -146,5 +146,28 @@ async resetPassword({ email, otp, newPassword }) {
   return { message: "Password berhasil direset" };
 }
 
+ async changePassword({ userId, oldPassword, newPassword }) {
+        // 1. Cari pengguna berdasarkan ID dari token
+        const user = await User.findByPk(userId);
+        if (!user) throw new Error("User tidak ditemukan.");
 
+        // 2. Bandingkan password lama yang diinput dengan yang ada di database
+        const isMatch = await bcrypt.compare(oldPassword, user.password);
+        if (!isMatch) {
+            throw new Error("Password lama yang Anda masukkan salah.");
+        }
+
+        // 3. Validasi dan hash password baru
+        const passwordValid = /^(?=.*\d).{8,}$/.test(newPassword);
+        if (!passwordValid) {
+            throw new Error("Password baru harus minimal 8 karakter dan mengandung angka.");
+        }
+        const hash = await bcrypt.hash(newPassword, SALT_ROUNDS);
+
+        // 4. Simpan password baru
+        user.password = hash;
+        await user.save();
+
+        return { message: "Password berhasil diubah" };
+    }
 }

@@ -13,6 +13,8 @@ router.post("/resend-otp", AuthController.resendOtp);
 router.post("/forgot-password", AuthController.forgotPassword);
 router.post("/reset-password", AuthController.resetPassword);
 
+router.patch('/change-password', authenticate, AuthController.changePassword);
+
 router.get('/google', passport.authenticate('google', { scope: ['profile', 'email'] }));
 
 router.get(
@@ -25,7 +27,6 @@ router.get(
     const user = req.user;
     const token = generateJwtToken(user);
 
-    // Kirim respons lengkap dengan data user yang benar dari Passport
     res.json({ message: 'Login sukses', token, user });
   }
 );
@@ -33,7 +34,5 @@ router.get(
 router.get('/login-failed', (req, res) => {
   res.status(401).json({ message: "Login dengan Google gagal" });
 });
-
-// ... (swagger docs)
 
 export default router;

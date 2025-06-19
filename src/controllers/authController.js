@@ -70,6 +70,21 @@ async resendOtp(req, res) {
       res.status(400).json({ message: err.message });
     }
   }
+
+     async changePassword(req, res) {
+        try {
+            // Ambil userId dari token yang sudah diverifikasi oleh middleware 'authenticate'
+            const userId = req.user.id;
+            const { oldPassword, newPassword } = req.body;
+
+            await authService.changePassword({ userId, oldPassword, newPassword });
+
+            res.status(200).json({ message: "Password berhasil diubah." });
+        } catch (error) {
+            // Jika password lama salah, service akan melempar error
+            res.status(400).json({ message: error.message });
+        }
+    }
 }
 
 export default new AuthController();
