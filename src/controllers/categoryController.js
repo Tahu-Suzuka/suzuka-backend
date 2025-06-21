@@ -6,11 +6,11 @@ const categoryService = new CategoryService(Category);
 
 class CategoryController {
     async createCategory(req, res) {
+        const errors = validationResult(req);
+        if (!errors.isEmpty()) {
+            return res.status(422).json({ errors: errors.array() });
+        }
         try {
-            const errors = validationResult(req);
-            if (!errors.isEmpty()) {
-                return res.status(422).json({ errors: errors.array() });
-            }
             const data = req.body;
             const category = await categoryService.create(data);
             res.status(201).json({
@@ -36,7 +36,33 @@ class CategoryController {
             });
         }
     }
+
+        async getCategoryById(req, res) {
+        try {
+            const { id } = req.params;
+            const category = await categoryService.getById(id);
+            
+            if (!category) {
+                return res.status(404).json({
+                    message: `Kategori dengan ID ${id} tidak ditemukan`,
+                });
+            }
+
+            res.status(200).json({
+                message: "Berhasil mengambil data kategori",
+                data: category,
+            });
+        } catch (error) {
+            res.status(500).json({
+                message: error.message || "Gagal mengambil data kategori",
+            });
+        }
+    }
     async updateCategory(req, res) {
+        const errors = validationResult(req);
+        if (!errors.isEmpty()) {
+        return res.status(422).json({ errors: errors.array() });
+            }
         try {
             const { id } = req.params;
             const data = req.body;

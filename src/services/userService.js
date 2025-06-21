@@ -1,17 +1,7 @@
 import { User } from "../models/userModel.js";
-import crypto from "crypto";
 
 class UserService {
   constructor() {}
-
-  async create(data) {
-    const id = crypto.randomUUID();
-    const user = await User.create({
-      id,   
-      ...data,
-    });
-    return user;
-  }
 
   async getAll() {
     const res = await User.findAll();
@@ -35,7 +25,6 @@ class UserService {
     const user = await User.findByPk(userId);
     if (!user) throw new Error("User tidak ditemukan");
 
-    // Update field yang relevan
     user.name = name || user.name;
     user.address = address || user.address;
     user.phone = phone || user.phone;
@@ -43,7 +32,6 @@ class UserService {
 
     await user.save();
 
-    // Sembunyikan data sensitif sebelum dikembalikan
     user.password = undefined;
     user.otp = undefined;
     user.googleId = undefined;

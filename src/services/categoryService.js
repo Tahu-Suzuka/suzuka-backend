@@ -1,8 +1,7 @@
 import "../configs/database.js";
 import crypto from "crypto";
 import { Category } from "../models/categoryModel.js";
-import { Product } from "../models/productModel.js";
-import { Op } from "sequelize";
+
 
 class CategoryService {
     constructor() {}
@@ -20,6 +19,11 @@ class CategoryService {
         const categories = await Category.findAll();
         return categories;
     }   
+
+    async getById(id) {
+        const category = await Category.findByPk(id);
+        return category;
+    }
 
     async update(id, data) {
         const category = await this.getById(id);

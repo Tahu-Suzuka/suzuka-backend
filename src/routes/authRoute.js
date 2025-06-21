@@ -1,19 +1,36 @@
 import { Router } from 'express';
 import AuthController from '../controllers/authController.js';
+import UserController from '../controllers/userController.js';
+import { uploadProfile } from '../middleware/upload.js';
 import { authenticate } from "../middleware/auth.js";
 import passport from "passport";
 import { generateJwtToken } from '../utils/jwt.js';
 
+import {
+  validateRegister,
+  validateLogin,
+  validateVerifyOtp,
+  validateForgotPassword,
+  validateResetPassword,
+  validateChangePassword
+} from '../middleware/validateAuth.js';
+
+import { validateUpdateProfile } from '../middleware/validateUser.js';
+
 const router = Router();
 
-router.post('/register', AuthController.register);
-router.post('/login', AuthController.login);
-router.post("/verify-otp", AuthController.verifyOtp);
-router.post("/resend-otp", AuthController.resendOtp);
-router.post("/forgot-password", AuthController.forgotPassword);
-router.post("/reset-password", AuthController.resetPassword);
+router.post('/register', validateRegister, AuthController.register);
+router.post('/login', validateLogin, AuthController.login);
+router.post("/verify-otp", validateVerifyOtp, AuthController.verifyOtp);
+router.post("/resend-otp", validateForgotPassword, AuthController.resendOtp); // validateForgotPassword karena hanya butuh email
+router.post("/forgot-password", validateForgotPassword, AuthController.forgotPassword);
+router.post("/reset-password", validateResetPassword, AuthController.resetPassword);
 
-router.patch('/change-password', authenticate, AuthController.changePassword);
+router.patch('/change-password', authenticate, validateChangePassword, AuthController.changePassword);
+
+router.get('/profile', authenticate, UserController.getProfile);
+router.patch('/profile', authenticate, validateUpdateProfile, UserController.updateProfile);
+router.patch('/profile/picture', authenticate, uploadProfile.single('profile_picture'), UserController.updateProfilePicture);
 
 router.get('/google', passport.authenticate('google', { scope: ['profile', 'email'] }));
 

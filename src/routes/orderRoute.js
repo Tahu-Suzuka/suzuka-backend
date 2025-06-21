@@ -3,12 +3,17 @@ import { Router } from 'express';
 import OrderController from '../controllers/orderController.js';
 import { authenticate } from '../middleware/auth.js';
 import { validateAdmin } from '../middleware/validateAdmin.js';
+import { 
+    validateCreateOrder, 
+    validateCreateOrderFromCart, 
+    validateUpdateStatus 
+} from '../middleware/validateOrder.js';
 import reviewRouter from './reviewRoute.js';
 
 const router = Router();
 
-router.post('/', authenticate, OrderController.createOrder); // Buat pesanan baru
-router.post('/from-cart', authenticate, OrderController.createOrderFromCart); // Buat pesanan dari keranjang
+router.post('/', authenticate, validateCreateOrder, OrderController.createOrder);
+router.post('/from-cart', authenticate, validateCreateOrderFromCart, OrderController.createOrderFromCart);
 router.get('/', authenticate, OrderController.getUserOrders); // Lihat riwayat pesanan
 router.get('/:id', authenticate, OrderController.getSingleOrder); // Lihat detail satu pesanan
 
@@ -28,8 +33,9 @@ router.patch(
     '/:id/status', 
     authenticate, 
     validateAdmin, 
+    validateUpdateStatus,
     OrderController.updateOrderStatus
-); // Update status pesanan
+);
 
 router.use('/:orderId/reviews', reviewRouter); 
 

@@ -1,6 +1,7 @@
 import { Router } from 'express';
 import cartController from '../controllers/cartController.js';
 import { authenticate } from '../middleware/auth.js';
+import { validateAddItem, validateUpdateItem } from '../middleware/validateCart.js';
 
 const router = Router();
 
@@ -8,9 +9,9 @@ const router = Router();
 router.use(authenticate);
 
 router.get('/', cartController.getCart);
-router.post('/', cartController.addItem);
+router.post('/', validateAddItem, cartController.addItem);
 router.delete('/', cartController.clearCart);
-router.patch('/:id', cartController.updateItem);
+router.patch('/', validateUpdateItem, cartController.updateItems);
 router.delete('/:id', cartController.removeItem);
 
 export default router;

@@ -1,23 +1,27 @@
-// src/middleware/authMiddleware.js
 import jwt from "jsonwebtoken";
-const JWT_SECRET = process.env.JWT_SECRET || "secret_key";
+import 'dotenv/config'; 
+
+const JWT_SECRET = process.env.JWT_SECRET;
+
+// Tambahkan pengecekan saat aplikasi dimulai
+if (!JWT_SECRET) {
+  throw new Error("FATAL ERROR: JWT_SECRET tidak didefinisikan di dalam file .env");
+}
 
 export function authenticate(req, res, next) {
   const header = req.headers.authorization;
-  console.log('Auth header:', header); // Debug log
   
-  if (!header) return res.status(401).json({ message: "Token dibutuhkan" });
+  if (!header || !header.startsWith('Bearer ')) {
+    return res.status(401).json({ message: "Token dibutuhkan atau format salah (gunakan Bearer Token)" });
+  }
 
   const token = header.split(" ")[1];
-  console.log('Extracted token:', token ? 'Present' : 'Missing'); // Debug log
   
   try {
     const payload = jwt.verify(token, JWT_SECRET);
-    console.log('Token payload:', payload); // Debug log
-    req.user = payload; // tersedia di controller selanjutnya
+    req.user = payload;
     next();
   } catch (error) {
-    console.log('Token verification error:', error.message); // Debug log
-    res.status(401).json({ message: "Token tidak valid" });
+    res.status(401).json({ message: "Token tidak valid atau kedaluwarsa" });
   }
 }

@@ -16,10 +16,10 @@ export class AuthService {
     const exists = await User.findOne({ where: { email } });
     if (exists) throw new Error("Email sudah terdaftar");
 
-    const passwordValid = /^(?=.*\d).{8,}$/.test(password);
-    if (!passwordValid) {
-      throw new Error("Password harus minimal 8 karakter dan mengandung angka");
-    }
+    // const passwordValid = /^(?=.*\d).{8,}$/.test(password);
+    // if (!passwordValid) {
+    //   throw new Error("Password harus minimal 8 karakter dan mengandung angka");
+    // }
 
     const hash = await bcrypt.hash(password, SALT_ROUNDS);
 
@@ -133,10 +133,10 @@ async resetPassword({ email, otp, newPassword }) {
 
   if (user.otp !== otp) throw new Error("OTP tidak sesuai");
 
-  const passwordValid = /^(?=.*\d).{8,}$/.test(newPassword);
-  if (!passwordValid) {
-    throw new Error("Password harus minimal 8 karakter dan mengandung angka");
-  }
+//   const passwordValid = /^(?=.*\d).{8,}$/.test(newPassword);
+//   if (!passwordValid) {
+//     throw new Error("Password harus minimal 8 karakter dan mengandung angka");
+//   }
 
   const hash = await bcrypt.hash(newPassword, SALT_ROUNDS);
   user.password = hash;

@@ -1,21 +1,21 @@
 import { ReviewService } from '../services/reviewService.js';
 const reviewService = new ReviewService();
+import { validationResult } from 'express-validator';
 
 class ReviewController {
     
-    async createReview(req, res) {
+   async createReview(req, res) {
+        const errors = validationResult(req);
+        if (!errors.isEmpty()) {
+            return res.status(422).json({ errors: errors.array() });
+        }
         try {
             const userId = req.user.id;
             const { orderId } = req.params;
             const { productId, rating, comment } = req.body;
 
-            // LANGKAH 1: Deklarasikan dan inisialisasi objek 'data' di sini
             const data = {
-                userId,
-                orderId,
-                productId,
-                rating,
-                comment,
+                userId, orderId, productId, rating, comment,
                 image1: null, 
                 image2: null, 
             };

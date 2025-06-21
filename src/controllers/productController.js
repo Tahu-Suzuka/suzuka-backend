@@ -6,12 +6,11 @@ const productService = new ProductService(Product);
 
 class ProductController {
      async createProduct(req, res) {
+        const errors = validationResult(req);
+        if (!errors.isEmpty()) {
+            return res.status(422).json({ errors: errors.array() });
+        }
         try {
-            const errors = validationResult(req);
-            if (!errors.isEmpty()) {
-                return res.status(422).json({ errors: errors.array() });
-            }
-        
             const adminId = req.user.id;
             const data = { ...req.body, userId: adminId };
 
@@ -76,6 +75,10 @@ class ProductController {
             }
 
  async updateProduct(req, res) {
+        const errors = validationResult(req);
+        if (!errors.isEmpty()) {
+            return res.status(422).json({ errors: errors.array() });
+        }
         try {
             const { id } = req.params;
             const data = req.body; // Ambil data teks dari form (nama, harga, dll.)

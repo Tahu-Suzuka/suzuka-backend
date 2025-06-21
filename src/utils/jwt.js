@@ -1,35 +1,24 @@
+// File: src/utils/jwt.js
+
 import jwt from "jsonwebtoken";
+import 'dotenv/config'; // Memastikan variabel .env selalu terbaca
 
-const JWT_SECRET = process.env.JWT_SECRET || "secret_key";
+// --- PERBAIKAN DI SINI ---
+// Paksa untuk menggunakan JWT_SECRET dari .env dan hilangkan fallback
+const JWT_SECRET = process.env.JWT_SECRET;
 
-/**
- * Generate JWT token from user payload
- * @param {Object} user - user object { id, email, role }
- * @param {String} expiresIn - token expiration time (default: 7d)
- * @returns {String} token
- */
-export function generateJwtToken(user, expiresIn = "7d") {
-  return jwt.sign(
-    { id: user.id, email: user.email, role: user.role },
-    JWT_SECRET,
-    { expiresIn }
-  );
+// Tambahkan pengecekan saat aplikasi dimulai
+if (!JWT_SECRET) {
+  throw new Error("FATAL ERROR: JWT_SECRET tidak didefinisikan di dalam file .env");
 }
 
-/**
- * Verify token and return payload (throws error if invalid)
- * @param {String} token - JWT token
- * @returns {Object} decoded payload
- */
-export function verifyJwtToken(token) {
-  return jwt.verify(token, JWT_SECRET);
+export function generateJwtToken(user) {
+    const payload = {
+        id: user.id,
+        email: user.email,
+        role: user.role
+    };
+    return jwt.sign(payload, JWT_SECRET, { expiresIn: '7d' });
 }
 
-/**
- * Decode token without verifying
- * @param {String} token - JWT token
- * @returns {Object|null} decoded payload
- */
-export function decodeJwtToken(token) {
-  return jwt.decode(token);
-}
+// ... (fungsi lain seperti verify dan decode bisa dihapus jika tidak digunakan di tempat lain)

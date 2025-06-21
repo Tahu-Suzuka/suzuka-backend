@@ -1,5 +1,7 @@
 // src/controllers/authController.js
 import { AuthService } from "../services/authService.js";
+import { validationResult } from 'express-validator';
+
 const authService = new AuthService();
 
 class AuthController {

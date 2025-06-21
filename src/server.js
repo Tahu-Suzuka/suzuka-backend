@@ -6,6 +6,7 @@ import routerApi from './routes/index.js';
 import authRoute from "./routes/authRoute.js";
 import passport from 'passport';
 import './configs/passport.js';
+import { errorHandler } from './middleware/errorHandler.js';
 
 config();
 const app = express();
@@ -19,7 +20,6 @@ app.use(passport.initialize());
 app.use(json());
 
 app.use(express.static(path.join(__dirname, 'public')));
-// --------------------------------------------------
 
 
 
@@ -29,6 +29,8 @@ app.get("/", (req, res) => {
   res.send("Tahu Suzuka Punya Bapak Ade");
 });
 routerApi(app);
+
+app.use(errorHandler);
 
 // Jalankan server
 app.listen(port, () => {

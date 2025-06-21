@@ -11,11 +11,16 @@ const ensureDir = (dirPath) => {
 
 // Filter untuk hanya menerima file gambar
 const imageFilter = (req, file, cb) => {
-  if (file.mimetype.startsWith('image/')) {
-    cb(null, true);
-  } else {
-    cb(new Error('Hanya file gambar yang diizinkan!'), false);
-  }
+    const allowedExtensions = /\.(jpg|jpeg|png)$/i; 
+
+    const isExtensionAllowed = allowedExtensions.test(path.extname(file.originalname));
+    const isMimeTypeAllowed = file.mimetype.startsWith('image/');
+
+    if (isExtensionAllowed && isMimeTypeAllowed) {
+        cb(null, true);
+    } else {
+        cb(new Error('Format gambar tidak valid. Hanya file JPG, JPEG, PNG yang diperbolehkan.'), false);
+    }
 };
 
 // Konfigurasi penyimpanan untuk FOTO PROFIL

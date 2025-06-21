@@ -1,4 +1,4 @@
-// Diubah dari CartItem menjadi Cart
+import sequelize from '../configs/database.js';
 import { Cart } from '../models/cartModel.js';
 import { Product } from '../models/productModel.js';
 
@@ -11,7 +11,7 @@ export class CartService {
             include: [{
                 model: Product,
                 as: 'product',
-                attributes: ['product_name', 'price', 'image'],
+                attributes: ['product_name', 'price', 'main_image'],
             }],
             order: [['createdAt', 'DESC']],
         });
@@ -23,23 +23,20 @@ export class CartService {
         return { carts, totalPayment };
     }
 
-      async addItemToCart({ userId, items }) {
+        async addItemToCart({ userId, items }) {
         const addedItems = [];
 
-        // Gunakan for...of agar bisa menggunakan await di dalam loop
         for (const item of items) {
             const { productId, quantity } = item;
 
             if (!productId || !quantity) {
-                // Lewati item yang tidak valid atau lempar error
                 continue; 
             }
 
             const product = await Product.findByPk(productId);
+            
             if (!product) {
-                 // Anda bisa memilih untuk mengabaikan produk yang tidak ada atau mengembalikan error
-                console.warn(`Produk dengan ID ${productId} tidak ditemukan, item dilewati.`);
-                continue;
+                throw new Error(`Produk dengan ID ${productId} tidak ditemukan.`);
             }
 
             const existingItem = await Cart.findOne({
@@ -63,25 +60,44 @@ export class CartService {
         return addedItems;
     }
     
-    // Parameter diubah dari cartItemId menjadi cartId
-    async updateItemQuantity({ userId, cartId, quantity }) {
-        // Menggunakan model Cart dan parameter cartId
-        const item = await Cart.findOne({ where: { id: cartId, userId } });
-        if (!item) {
-            throw new Error('Item keranjang tidak ditemukan');
-        }
+    async updateItemQuantity({ userId, items }) {
+        const t = await sequelize.transaction();
+        try {
+            for (const item of items) {
+                const { productId, quantity } = item;
 
-        if (quantity <= 0) {
-            await item.destroy();
-            return null;
-        } else {
-            item.quantity = quantity;
-            await item.save();
-            return item;
+            const product = await Product.findByPk(productId);
+            
+            if (!product) {
+                throw new Error(`Produk dengan ID ${productId} tidak ditemukan.`);
+            }
+
+                const cartItem = await Cart.findOne({
+                    where: { userId, productId },
+                    transaction: t
+                });
+
+                // Hanya proses jika itemnya memang ada di keranjang
+                if (cartItem) {
+                    if (quantity <= 0) {
+                        // Hapus item jika kuantitasnya 0 atau kurang
+                        await cartItem.destroy({ transaction: t });
+                    } else {
+                        // Update kuantitasnya
+                        cartItem.quantity = quantity;
+                        await cartItem.save({ transaction: t });
+                    }
+                }
+            }
+            // Jika semua proses dalam loop berhasil, commit transaksi
+            await t.commit();
+        } catch (error) {
+            // Jika ada satu saja error, batalkan semua perubahan
+            await t.rollback();
+            throw new Error(`Gagal memperbarui keranjang: ${error.message}`);
         }
     }
 
-    // Parameter diubah dari cartItemId menjadi cartId
     async removeItemFromCart({ userId, cartId }) {
         // Menggunakan model Cart dan parameter cartId
         const item = await Cart.findOne({ where: { id: cartId, userId } });

@@ -164,7 +164,15 @@ class OrderService {
         const orders = await Order.findAll({
             where: { userId },
             order: [['orderDate', 'DESC']],
-            include: ['items'] // Sertakan item di setiap order
+             include: [{
+                model: OrderItem,
+                as: 'items',
+                include: [{ 
+                    model: Product,
+                    as: 'product',
+                    attributes: ['product_name', 'image'] 
+                }]
+            }]
         });
         return orders;
     }

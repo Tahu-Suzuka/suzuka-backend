@@ -1,23 +1,9 @@
-  import { UserService } from "../services/userService.js";
+import { UserService } from "../services/userService.js";
+import { validationResult } from "express-validator";
 
   const userService = new UserService();
 
   class UserController {
-    async createUser(req, res) {
-      try {
-        const data = req.body;
-        const user = await userService.create(data);
-        res.status(201).json({
-          message: "Berhasil membuat user baru",
-          data: user,
-        });
-      } catch (error) {
-        res.status(500).json({
-          message: error.message || "Gagal membuat user",
-        });
-      }
-    }
-
     async getAllUsers(req, res) {
       try {
         const users = await userService.getAll();
@@ -56,6 +42,10 @@
     // Memperbarui user berdasarkan ID
     async updateUser(req, res) {
       try {
+        const errors = validationResult(req);
+         if (!errors.isEmpty()) {
+            return res.status(422).json({ errors: errors.array() });
+          }
         const { id } = req.params;
         const data = req.body;
         const user = await userService.update(id, data);
@@ -70,6 +60,10 @@
       }
     }
     async updateProfile(req, res) {
+    const errors = validationResult(req);
+      if (!errors.isEmpty()) {
+          return res.status(422).json({ errors: errors.array() });
+      }
     try {
       const userId = req.user.id; 
       const updatedUser = await userService.updateProfile(userId, req.body);
@@ -84,6 +78,10 @@
   }
 
     async updateProfilePicture(req, res) {
+    const errors = validationResult(req);
+      if (!errors.isEmpty()) {
+          return res.status(422).json({ errors: errors.array() });
+      }
     try {
       if (!req.file) {
         return res.status(400).json({ message: "File gambar tidak ditemukan." });
@@ -103,9 +101,30 @@
       res.status(400).json({ message: err.message });
     }
   }
-   
 
-    // Menghapus user berdasarkan ID
+   async getProfile(req, res) {
+      try {
+        const userId = req.user.id;
+        const user = await userService.getById(userId);
+
+        if (!user) {
+          return res.status(404).json({ message: "User tidak ditemukan" });
+        }
+        
+        user.password = undefined;
+        user.otp = undefined;
+
+        res.status(200).json({
+          message: "Profil berhasil diambil",
+          data: user,
+        });
+      } catch (error) {
+        res.status(500).json({
+          message: error.message || "Gagal mengambil data profil",
+        });
+      }
+    }
+   
     async deleteUser(req, res) {
       try {
         const { id } = req.params;

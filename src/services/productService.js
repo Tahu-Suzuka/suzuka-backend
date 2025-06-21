@@ -18,7 +18,7 @@ class ProductService {
     }
 
         async getAll(options = {}) {
-        const { limit = 10, page = 1, category, min_price, max_price, sort_by } = options;
+        const { limit = 15, page = 1, category, min_price, max_price, sort_by } = options;
         
         const offset = (page - 1) * limit;
         const where = {};

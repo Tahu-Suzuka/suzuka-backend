@@ -1,18 +1,19 @@
 import { VoucherService } from '../services/voucherService.js';
+import { validationResult } from 'express-validator';
 
 const voucherService = new VoucherService();
 
 class VoucherController {
-    async createVoucher(req, res) {
+   async createVoucher(req, res) {
+        const errors = validationResult(req);
+        if (!errors.isEmpty()) {
+            return res.status(422).json({ errors: errors.array() });
+        }
         try {
-            const userId = req.user.id; // Ubah nama variabel menjadi userId
-            const data = { ...req.body, userId: userId }; // Masukkan ke data sebagai 'userId'
-
+            const userId = req.user.id;
+            const data = { ...req.body, userId: userId };
             const voucher = await voucherService.create(data);
-            res.status(201).json({
-                message: "Berhasil membuat voucher baru",
-                data: voucher,
-            });
+            res.status(201).json({ message: "Berhasil membuat voucher baru", data: voucher });
         } catch (error) {
             res.status(500).json({ message: error.message || "Gagal membuat voucher" });
         }
@@ -47,17 +48,18 @@ class VoucherController {
     }
 
     async updateVoucher(req, res) {
+        const errors = validationResult(req);
+        if (!errors.isEmpty()) {
+            return res.status(422).json({ errors: errors.array() });
+        }
         try {
             const { id } = req.params;
             const data = req.body;
             const voucher = await voucherService.update(id, data);
-             if (!voucher) {
+            if (!voucher) {
                 return res.status(404).json({ message: `Voucher dengan ID ${id} tidak ditemukan` });
             }
-            res.status(200).json({
-                message: "Berhasil memperbarui voucher",
-                data: voucher,
-            });
+            res.status(200).json({ message: "Berhasil memperbarui voucher", data: voucher });
         } catch (error) {
             res.status(500).json({ message: error.message || "Gagal memperbarui voucher" });
         }

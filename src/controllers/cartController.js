@@ -1,4 +1,6 @@
 import { CartService } from '../services/cartService.js';
+import { validationResult } from 'express-validator';
+
 const cartService = new CartService();
 
 class CartController {
@@ -14,6 +16,10 @@ class CartController {
     }
 
      async addItem(req, res) {
+        const errors = validationResult(req);
+        if (!errors.isEmpty()) {
+            return res.status(422).json({ errors: errors.array() });
+        }
         try {
             const userId = req.user.id;
             const { items } = req.body;
@@ -29,24 +35,20 @@ class CartController {
         }
     }
 
-    async updateItem(req, res) {
+     async updateItems(req, res) {
+        const errors = validationResult(req);
+        if (!errors.isEmpty()) {
+            return res.status(422).json({ errors: errors.array() });
+        }
         try {
             const userId = req.user.id;
-            // Diubah dari cartItemId menjadi cartId
-            const { id: cartId } = req.params;
-            const { quantity } = req.body;
-            if (typeof quantity !== 'number') {
-                return res.status(400).json({ message: 'quantity must be a number' });
-            }
-            // Mengirim cartId ke service
-            const updatedItem = await cartService.updateItemQuantity({ userId, cartId, quantity });
-             if (updatedItem === null) {
-                res.status(200).json({ message: 'Item dihapus karena kuantitas 0' });
-            } else {
-                res.status(200).json({ message: 'Kuantitas item berhasil diubah', data: updatedItem });
-            }
+            const { items } = req.body; // items adalah array [{ productId, quantity }]
+            
+            await cartService.updateItemQuantity({ userId, items });
+
+            res.status(200).json({ message: 'Keranjang berhasil diperbarui.' });
         } catch (error) {
-            res.status(404).json({ message: error.message });
+            res.status(400).json({ message: error.message });
         }
     }
 

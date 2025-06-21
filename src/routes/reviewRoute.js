@@ -1,16 +1,16 @@
 import { Router } from 'express';
 import ReviewController from '../controllers/reviewController.js';
 import { authenticate } from '../middleware/auth.js';
-import { uploadReview } from '../middleware/upload.js'; // Impor middleware upload ulasan
+import { uploadReview } from '../middleware/upload.js'; 
+import { validateCreateReview } from '../middleware/validateReview.js';
 
-const router = Router({ mergeParams: true }); // mergeParams penting untuk dapat :orderId
+const router = Router({ mergeParams: true }); 
 
-// Rute ini akan menjadi /orders/:orderId/reviews
 router.post(
     '/',
     authenticate,
-    uploadReview,
+    uploadReview, 
+    validateCreateReview, 
     ReviewController.createReview
 );
-
 export default router;
