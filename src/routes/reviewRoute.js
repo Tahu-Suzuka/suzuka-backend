@@ -6,6 +6,16 @@ import { validateCreateReview } from '../middleware/validateReview.js';
 
 const router = Router({ mergeParams: true }); 
 
+router.get(
+    '/',
+    ReviewController.getAllReviews
+);
+
+router.get(
+    '/product/:productId',
+    ReviewController.getProductReviews
+);
+
 router.post(
     '/',
     authenticate,
@@ -13,4 +23,5 @@ router.post(
     validateCreateReview, 
     ReviewController.createReview
 );
+
 export default router;

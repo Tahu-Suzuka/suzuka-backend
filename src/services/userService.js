@@ -1,11 +1,65 @@
 import { User } from "../models/userModel.js";
+import { Op } from "sequelize";
+
+import bcrypt from "bcrypt";
+const SALT_ROUNDS = 10;
 
 class UserService {
   constructor() {}
 
+
+   async create(data) {
+    // Admin yang membuat user baru untuk pelanggan manual
+    const { name, email, password, address, phone } = data;
+
+    const hash = await bcrypt.hash(password, SALT_ROUNDS);
+
+    const user = await User.create({
+      name,
+      email,
+      password: hash,
+      address,
+      phone,
+      isVerified: true, 
+      role: 'user' //
+    });
+    return user;
+  }
+
   async getAll() {
-    const res = await User.findAll();
-    return res;
+        const users = await User.findAll({
+            attributes: {
+                include: [
+                    [sequelize.fn('COUNT', sequelize.col('orders.order_id')), 'orderCount']
+                ],
+                exclude: ['password', 'otp', 'googleId']
+            },
+            include: [{
+                model: Order,
+                as: 'orders',
+                attributes: []
+            }],
+            group: ['User.user_id'],
+            order: [['name', 'ASC']]
+        });
+        return users;
+  }
+
+  async searchByName(query) {
+    if (!query) {
+        return [];
+    }
+
+    const users = await User.findAll({
+        where: {
+            [Op.or]: [
+                { name: { [Op.like]: `%${query}%` } },
+            ]
+        },
+        limit: 10,
+        attributes: ['id', 'name',]
+    });
+    return users;
   }
 
   async getById(id) {

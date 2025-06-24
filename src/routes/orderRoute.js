@@ -6,14 +6,16 @@ import { validateAdmin } from '../middleware/validateAdmin.js';
 import { 
     validateCreateOrder, 
     validateCreateOrderFromCart, 
-    validateUpdateStatus 
+    validateUpdateStatus,
+    validateUpdateStatusByUser,
+    validateManualOrder
 } from '../middleware/validateOrder.js';
-import reviewRouter from './reviewRoute.js';
 
 const router = Router();
 
 router.post('/', authenticate, validateCreateOrder, OrderController.createOrder);
 router.post('/from-cart', authenticate, validateCreateOrderFromCart, OrderController.createOrderFromCart);
+router.post('/manual', authenticate, validateAdmin, validateManualOrder, OrderController.createManualOrder); // Pesanan manual (hanya untuk admin)
 router.get('/', authenticate, OrderController.getUserOrders); // Lihat riwayat pesanan
 router.get('/:id', authenticate, OrderController.getSingleOrder); // Lihat detail satu pesanan
 
@@ -26,7 +28,12 @@ router.post(
 
 router.post('/midtrans-notification', OrderController.handleMidtransNotification);
 
-
+router.patch(
+    '/:orderId/user-status',
+    authenticate,
+    validateUpdateStatusByUser,
+    OrderController.updateOrderStatusByUser
+);
 
 // Rute khusus untuk Admin
 router.patch(
@@ -37,9 +44,6 @@ router.patch(
     OrderController.updateOrderStatus
 );
 
-router.use('/:orderId/reviews', reviewRouter); 
-
-// Testing routes - bisa dihapus setelah masalah teratasi
 
 
 export default router;

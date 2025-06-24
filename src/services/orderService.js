@@ -10,53 +10,62 @@ import snap from '../utils/midtrans.js';
 const voucherService = new VoucherService();
 
 class OrderService {
-    async createOrder(userId, orderData) {
+ async createOrder(userId, orderData) {
         const user = await User.findByPk(userId);
+        if (!user) throw new Error("User tidak ditemukan.");
+        if (!user.address || !user.phone) throw new Error("Harap lengkapi alamat dan nomor HP Anda di profil sebelum melanjutkan checkout.");
 
-        if (!user) {
-            throw new Error("User tidak ditemukan.");
-        }
-
-        if (!user.address || !user.phone) {
-            throw new Error("Harap lengkapi alamat dan nomor HP Anda di profil sebelum melanjutkan checkout.");
-        }
-
-        const { items, note, shipPrice = 10000 } = orderData; 
+        // Ambil voucherCode juga
+        const { items, note, shipPrice = 0, voucherCode } = orderData; 
 
         if (!items || items.length === 0) {
-            throw new Error("Keranjang belanja kosong.");
+            throw new Error("Data 'items' dibutuhkan untuk membuat pesanan.");
         }
 
         const t = await sequelize.transaction();
-
         try {
-            let totalPriceOfProducts = 0;
-
+            let subtotal = 0;
             const productPromises = items.map(async (item) => {
                 const product = await Product.findByPk(item.productId);
-                if (!product) {
-                    throw new Error(`Produk dengan ID ${item.productId} tidak ditemukan.`);
-                }
-                totalPriceOfProducts += product.price * item.quantity;
+                if (!product) throw new Error(`Produk dengan ID ${item.productId} tidak ditemukan.`);
+                subtotal += product.price * item.quantity;
                 return { ...item, price: product.price };
             });
 
+            // itemsWithPrice sekarang berisi productId, quantity, dan price
             const itemsWithPrice = await Promise.all(productPromises);
             
-            const newOrder = await Order.create({
-                userId,
-                subtotal: totalPriceOfProducts,
-                shipPrice,
-                totalPayment: totalPriceOfProducts + shipPrice,
-                note,
-            }, { transaction: t });
+            let discountAmount = 0;
+            if (voucherCode) {
+                const voucher = await voucherService.getAndValidateVoucher(voucherCode);
+                if (subtotal < voucher.minPurchase) throw new Error(`Minimum pembelian untuk voucher ${voucherCode} tidak terpenuhi.`);
+                switch (voucher.type) {
+                    case 'POTONGAN_HARGA': discountAmount = voucher.value; break;
+                    case 'PERSENTASE':
+                        let calcDiscount = subtotal * (voucher.value / 100);
+                        discountAmount = voucher.maxDiscount && calcDiscount > voucher.maxDiscount ? voucher.maxDiscount : calcDiscount;
+                        break;
+                    case 'POTONGAN_ONGKIR':
+                        discountAmount = voucher.value > shipPrice ? shipPrice : voucher.value;
+                        break;
+                }
+            }
 
+            let totalPayment = (subtotal + shipPrice) - discountAmount;
+            if (totalPayment < 0) totalPayment = 0;
+            
+            const newOrder = await Order.create({
+                userId, subtotal, shipPrice, discountAmount,
+                voucherCode: voucherCode || null,
+                totalPayment, note,
+            }, { transaction: t });
+            
             const orderItemsPromises = itemsWithPrice.map(item => {
                 return OrderItem.create({
                     orderId: newOrder.id,
                     productId: item.productId,
                     quantity: item.quantity,
-                    price: item.price,
+                    price: item.price, 
                 }, { transaction: t });
             });
             
@@ -81,7 +90,7 @@ class OrderService {
             throw new Error("Harap lengkapi alamat dan nomor HP Anda di profil sebelum melanjutkan checkout.");
         }
 
-        const { note, shipPrice = 10000, voucherCode } = orderData;
+        const { note, shipPrice = 0, voucherCode } = orderData;
         const cartItems = await Cart.findAll({ where: { userId }, include: ['product'] });
 
         if (!cartItems || cartItems.length === 0) {
@@ -160,6 +169,55 @@ class OrderService {
         }
     }
 
+     async createManualOrder(orderData) {
+        // userId, items, note, dan shipPrice diambil dari orderData (req.body)
+        const { userId, items, note, shipPrice = 0 } = orderData;
+
+        const t = await sequelize.transaction();
+        try {
+            let subtotal = 0;
+            // Kita perlu mengambil harga dari setiap produk untuk menghitung subtotal
+            const productPromises = items.map(async (item) => {
+                const product = await Product.findByPk(item.productId);
+                // Validasi di middleware sudah memastikan produk ada, tapi ini adalah pengaman tambahan
+                if (!product) throw new Error(`Produk dengan ID ${item.productId} tidak ditemukan.`);
+                subtotal += product.price * item.quantity;
+                // Kembalikan item beserta harganya untuk disimpan di order_items
+                return { ...item, price: product.price };
+            });
+            const itemsWithPrice = await Promise.all(productPromises);
+
+            // Untuk pesanan manual, kita asumsikan tidak ada diskon
+            const discountAmount = 0;
+            const totalPayment = subtotal + shipPrice;
+
+            const newOrder = await Order.create({
+                userId, // <-- userId pelanggan dari body request
+                subtotal,
+                shipPrice,
+                discountAmount,
+                totalPayment,
+                note,
+                orderStatus: 'Diproses' 
+            }, { transaction: t });
+
+            const orderItemsPromises = itemsWithPrice.map(item => OrderItem.create({
+                orderId: newOrder.id,
+                productId: item.productId,
+                quantity: item.quantity,
+                price: item.price,
+            }, { transaction: t }));
+
+            await Promise.all(orderItemsPromises);
+            await t.commit();
+            
+            return Order.findByPk(newOrder.id, { include: ['items'] });
+        } catch (error) {
+            await t.rollback();
+            throw new Error(`Gagal membuat pesanan manual: ${error.message}`);
+        }
+    }
+
     async getOrdersByUser(userId) {
         const orders = await Order.findAll({
             where: { userId },
@@ -170,7 +228,7 @@ class OrderService {
                 include: [{ 
                     model: Product,
                     as: 'product',
-                    attributes: ['product_name', 'image'] 
+                    attributes: ['product_name', 'main_image', 'price']
                 }]
             }]
         });
@@ -186,7 +244,7 @@ class OrderService {
                 include: [{
                     model: Product,
                     as: 'product',
-                    attributes: ['id', 'product_name', 'image']
+                    attributes: ['id', 'product_name', 'main_image', 'price']
                 }]
             }, {
                 model: User,
@@ -209,6 +267,31 @@ class OrderService {
         await order.save();
         return order;
     }     
+
+    async updateOrderStatusByUser({ userId, orderId, status }) {
+    const order = await Order.findOne({ where: { id: orderId, userId: userId } });
+    if (!order) {
+        throw new Error("Pesanan tidak ditemukan atau Anda tidak memiliki akses.");
+    }
+
+    if (status === 'Dibatalkan') {
+        // Syarat: Hanya bisa batal jika status 'Menunggu Pembayaran'
+        if (order.orderStatus !== 'Menunggu Pembayaran') {
+            throw new Error('Pesanan ini sudah dibayar atau diproses dan tidak dapat dibatalkan.');
+        }
+        order.orderStatus = 'Dibatalkan';
+
+    } else if (status === 'Selesai') {
+        // Syarat: Hanya bisa selesai jika status 'Dikirim'
+        if (order.orderStatus !== 'Dikirim') {
+            throw new Error('Hanya pesanan yang sudah dikirim yang dapat diselesaikan.');
+        }
+        order.orderStatus = 'Selesai';
+    }
+
+    await order.save();
+    return order;
+}
     
  async createMidtransTransaction(orderId, userId) {
         const order = await Order.findOne({ where: { id: orderId, userId: userId }});
@@ -249,7 +332,7 @@ class OrderService {
 
             if (order.orderStatus === 'Menunggu Pembayaran') {
                 if ((transactionStatus === 'capture' && fraudStatus === 'accept') || transactionStatus === 'settlement') {
-                    await order.update({ orderStatus: 'Dibayar' });
+                    await order.update({ orderStatus: 'Diproses' });
                 } else if (transactionStatus === 'cancel' || transactionStatus === 'expire' || transactionStatus === 'deny') {
                     await order.update({ orderStatus: 'Dibatalkan' });
                 }

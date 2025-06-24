@@ -34,6 +34,20 @@ class OrderController {
         }
     }
 
+     async createManualOrder(req, res) {
+        const errors = validationResult(req);
+        if (!errors.isEmpty()) {
+            return res.status(422).json({ errors: errors.array() });
+        }
+        
+        try {
+            const newOrder = await orderService.createManualOrder(req.body);
+            res.status(201).json({ message: "Pesanan manual berhasil dibuat", data: newOrder });
+        } catch (error) {
+            res.status(400).json({ message: error.message });
+        }
+    }
+
     async getUserOrders(req, res) {
         try {
             const userId = req.user.id;
@@ -76,24 +90,25 @@ class OrderController {
         }
     }
 
-      async applyVoucher(req, res) {
+    async updateOrderStatusByUser(req, res) {
+        const errors = validationResult(req);
+        if (!errors.isEmpty()) {
+            return res.status(422).json({ errors: errors.array() });
+        }
+        
         try {
-            const { id: orderId } = req.params;
-            const { voucherCode } = req.body;
             const userId = req.user.id;
+            const { orderId } = req.params;
+            const { status } = req.body;
 
-            if (!voucherCode) {
-                 return res.status(400).json({ message: "Kode voucher dibutuhkan." });
-            }
-
-            const updatedOrder = await orderService.applyVoucherToOrder(orderId, voucherCode, userId);
+            const updatedOrder = await orderService.updateOrderStatusByUser({ userId, orderId, status });
 
             res.status(200).json({
-                message: "Voucher berhasil diterapkan pada pesanan",
-                data: updatedOrder,
+                message: `Pesanan berhasil diubah menjadi ${status}.`,
+                data: updatedOrder
             });
         } catch (error) {
-            res.status(400).json({ message: error.message || "Gagal menerapkan voucher." });
+            res.status(400).json({ message: error.message });
         }
     }
 

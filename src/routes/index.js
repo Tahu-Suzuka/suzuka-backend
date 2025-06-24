@@ -7,6 +7,7 @@ import orderRoutes from "./orderRoute.js";
 import cartRoutes from "./cartRoute.js";
 import voucherRoutes from "./voucherRoute.js";
 import reportRoutes from "./reportRoute.js";
+import reviewRoutes from "./reviewRoute.js";
 
 function routerApi(app) {
     const router = Router();
@@ -19,6 +20,7 @@ function routerApi(app) {
     router.use("/carts", cartRoutes);
     router.use("/vouchers", voucherRoutes);
     router.use("/reports", reportRoutes);
+    router.use("/reviews", reviewRoutes); 
 }
 
 export default routerApi;

@@ -1,7 +1,7 @@
 import { Review } from '../models/reviewModel.js';
 import { Order } from '../models/orderModel.js';
 import { User } from '../models/userModel.js';
-import { OrderItem } from '../models/orderItemModel.js';
+import { Product } from '../models/productModel.js';
 
 class ReviewService {
     
@@ -16,8 +16,8 @@ class ReviewService {
         const newReview = await Review.create({
             rating,
             comment,
-            image1, // Gunakan image1
-            image2, // Gunakan image2
+            image1,
+            image2, 
             userId,
             productId,
             orderId
@@ -27,15 +27,29 @@ class ReviewService {
     }
 
    async getReviewsForProduct(productId) {
+        const product = await Product.findByPk(productId);
+        if (!product) {
+            throw new Error(`Produk dengan ID ${productId} tidak ditemukan.`);
+        }
         const reviews = await Review.findAll({ 
             where: { productId },
             include: [{ 
                 model: User, 
                 as: 'user', 
-                // Hanya ambil nama dan gambar user, jangan sertakan info sensitif
                 attributes: ['name', 'image'] 
             }],
-            order: [['createdAt', 'DESC']] // Urutkan dari yang terbaru
+            order: [['createdAt', 'DESC']] 
+        });
+        return reviews;
+    }
+
+    async getAllReviews() {
+        const reviews = await Review.findAll({
+            include: [
+                { model: User, as: 'user', attributes: ['name', 'email'] },
+                { model: Product, as: 'product', attributes: ['product_name'] }
+            ],
+            order: [['createdAt', 'DESC']]
         });
         return reviews;
     }

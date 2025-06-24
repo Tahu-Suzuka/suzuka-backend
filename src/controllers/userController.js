@@ -1,9 +1,33 @@
 import { UserService } from "../services/userService.js";
 import { validationResult } from "express-validator";
 
+
   const userService = new UserService();
 
   class UserController {
+ async createUser(req, res) {
+    const errors = validationResult(req);
+    if (!errors.isEmpty()) {
+        return res.status(422).json({ errors: errors.array() });
+    }
+    try {
+      const data = req.body;
+      const user = await userService.create(data);
+
+      user.password = undefined;
+
+      res.status(201).json({
+        message: "User baru berhasil dibuat oleh Admin",
+        data: user,
+      });
+    } catch (error) {
+      res.status(400).json({
+        message: error.message || "Gagal membuat user",
+      });
+    }
+  }
+        
+
     async getAllUsers(req, res) {
       try {
         const users = await userService.getAll();
@@ -16,6 +40,22 @@ import { validationResult } from "express-validator";
           message: error.message || "Gagal mengambil data user",
         });
       }
+    }
+
+     async searchUsers(req, res) {
+        try {
+            const { q } = req.query;
+            const users = await userService.searchByName(q);
+
+            res.status(200).json({
+                message: "Hasil pencarian user",
+                data: users
+            });
+        } catch (error) {
+            res.status(500).json({
+                message: error.message || "Gagal melakukan pencarian user",
+            });
+        }
     }
 
     // Mendapatkan user berdasarkan ID

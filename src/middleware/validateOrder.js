@@ -1,4 +1,6 @@
 import { body } from 'express-validator';
+import { User } from '../models/userModel.js'; // Impor User untuk validasi
+import { Product } from '../models/productModel.js'; 
 
 const validateItemsArray = () =>
     body('items')
@@ -34,6 +36,27 @@ const validateStatus = () =>
         .isIn(['Menunggu Pembayaran', 'Dibayar', 'Diproses', 'Dikirim', 'Selesai', 'Dibatalkan'])
         .withMessage('Nilai status tidak valid.');
 
+const validateUserId = () =>
+    body('userId')
+        .notEmpty().withMessage('userId pelanggan tidak boleh kosong.')
+        .isUUID().withMessage('Format userId tidak valid.')
+        .custom(async (value) => {
+            const user = await User.findByPk(value);
+            if (!user) {
+                return Promise.reject('User pelanggan dengan ID tersebut tidak ditemukan.');
+            }
+        });
+
+const validateManualItems = () =>
+    body('items.*.productId')
+        .notEmpty().withMessage('productId tidak boleh kosong.')
+        .custom(async (value) => {
+            const product = await Product.findByPk(value);
+            if (!product) {
+                return Promise.reject(`Produk dengan ID ${value} tidak ditemukan.`);
+            }
+        });
+
 
 export const validateCreateOrder = [
     validateItemsArray(),
@@ -50,4 +73,20 @@ export const validateCreateOrderFromCart = [
 
 export const validateUpdateStatus = [
     validateStatus()
+];
+
+export const validateUpdateStatusByUser = [
+    body('status')
+        .notEmpty().withMessage('Status tidak boleh kosong.')
+        .isIn(['Dibatalkan', 'Selesai'])
+        .withMessage('Nilai status tidak valid.'),
+];
+
+export const validateManualOrder = [
+    validateUserId(),
+    body('items').isArray({ min: 1 }).withMessage('Input "items" harus berupa array dan tidak boleh kosong.'),
+    validateManualItems(),
+    body('items.*.quantity').isInt({ min: 1 }).withMessage('Kuantitas produk minimal harus 1.'),
+    body('shipPrice').optional().isNumeric().withMessage('Ongkos kirim harus berupa angka.'),
+    body('note').optional().isString().withMessage('Note harus berupa teks.')
 ];
