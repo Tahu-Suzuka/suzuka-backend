@@ -7,10 +7,10 @@ const validateItemsArray = () =>
         .isArray({ min: 1 })
         .withMessage('Body "items" harus berupa array dan tidak boleh kosong.');
 
-const validateProductIdInArray = () =>
-    body('items.*.productId')
-        .notEmpty()
-        .withMessage('productId di dalam items tidak boleh kosong.');
+const validateVariationIdInArray = () =>
+    body('items.*.variationId')
+        .notEmpty().withMessage('variationId di dalam items tidak boleh kosong.')
+        .isUUID().withMessage('Format variationId tidak valid.');
 
 const validateQuantityInArray = () =>
     body('items.*.quantity')
@@ -60,7 +60,7 @@ const validateManualItems = () =>
 
 export const validateCreateOrder = [
     validateItemsArray(),
-    validateProductIdInArray(),
+    validateVariationIdInArray(),
     validateQuantityInArray(),
     validateNote(),
     validateVoucherCode()
@@ -88,5 +88,9 @@ export const validateManualOrder = [
     validateManualItems(),
     body('items.*.quantity').isInt({ min: 1 }).withMessage('Kuantitas produk minimal harus 1.'),
     body('shipPrice').optional().isNumeric().withMessage('Ongkos kirim harus berupa angka.'),
-    body('note').optional().isString().withMessage('Note harus berupa teks.')
+    body('note').optional().isString().withMessage('Note harus berupa teks.'),
+    body('paymentMethod')
+        .optional()
+        .isIn(['Cash', 'Transfer Manual'])
+        .withMessage('Metode pembayaran manual tidak valid. Hanya boleh "Cash" atau "Transfer Manual".')
 ];

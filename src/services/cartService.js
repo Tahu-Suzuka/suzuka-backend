@@ -1,47 +1,44 @@
 import sequelize from '../configs/database.js';
 import { Cart } from '../models/cartModel.js';
 import { Product } from '../models/productModel.js';
+import { ProductVariation } from '../models/productVariationModel.js';
 
 export class CartService {
 
     async getCart(userId) {
-        // Menggunakan model Cart
         const carts = await Cart.findAll({
             where: { userId },
             include: [{
-                model: Product,
-                as: 'product',
-                attributes: ['product_name', 'price', 'main_image'],
+                model: ProductVariation,
+                as: 'variation',
+                // Ambil juga data produk induknya
+                include: [{
+                    model: Product,
+                    as: 'product',
+                    attributes: ['product_name', 'mainImage']
+                }]
             }],
-            order: [['createdAt', 'DESC']],
+            order: [['createdAt', 'ASC']],
         });
 
         const totalPayment = carts.reduce((total, item) => {
-            return total + (item.product.price * item.quantity);
+            return total + (item.variation.price * item.quantity);
         }, 0);
 
         return { carts, totalPayment };
     }
 
-        async addItemToCart({ userId, items }) {
+     async addItemToCart({ userId, items }) {
         const addedItems = [];
-
         for (const item of items) {
-            const { productId, quantity } = item;
+            const { variationId, quantity } = item;
+            if (!variationId || !quantity) continue;
 
-            if (!productId || !quantity) {
-                continue; 
-            }
+            // Cek apakah variasi produk ada
+            const variation = await ProductVariation.findByPk(variationId);
+            if (!variation) throw new Error(`Variasi produk dengan ID ${variationId} tidak ditemukan.`);
 
-            const product = await Product.findByPk(productId);
-            
-            if (!product) {
-                throw new Error(`Produk dengan ID ${productId} tidak ditemukan.`);
-            }
-
-            const existingItem = await Cart.findOne({
-                where: { userId, productId },
-            });
+            const existingItem = await Cart.findOne({ where: { userId, productVariationId: variationId } });
 
             if (existingItem) {
                 existingItem.quantity += quantity;
@@ -50,30 +47,24 @@ export class CartService {
             } else {
                 const newItem = await Cart.create({
                     userId,
-                    productId,
+                    productVariationId: variationId,
                     quantity,
                 });
                 addedItems.push(newItem);
             }
         }
-        
         return addedItems;
     }
     
     async updateItemQuantity({ userId, items }) {
         const t = await sequelize.transaction();
-        try {
+         try {
             for (const item of items) {
-                const { productId, quantity } = item;
-
-            const product = await Product.findByPk(productId);
-            
-            if (!product) {
-                throw new Error(`Produk dengan ID ${productId} tidak ditemukan.`);
-            }
+                // Gunakan variationId untuk mencari item, bukan productId
+                const { variationId, quantity } = item;
 
                 const cartItem = await Cart.findOne({
-                    where: { userId, productId },
+                    where: { userId, productVariationId: variationId }, // <-- Perbaikan di sini
                     transaction: t
                 });
 

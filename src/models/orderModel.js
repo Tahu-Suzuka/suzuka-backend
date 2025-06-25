@@ -45,7 +45,11 @@ const OrderSchema = {
         allowNull: false,
         type: DataTypes.FLOAT,
     },
-
+        serviceFee: {
+        field: 'service_fee',
+        allowNull: false,
+        type: DataTypes.FLOAT,
+    },
     discountAmount: {
         field: 'discount_amount',
         allowNull: false,
@@ -61,6 +65,11 @@ const OrderSchema = {
         field: 'total_payment',
         allowNull: false,
         type: DataTypes.FLOAT,
+    },
+     paymentMethod: {
+        field: 'payment_method',
+        type: DataTypes.STRING,
+        allowNull: true,
     },
     orderStatus: {
         field: 'order_status',

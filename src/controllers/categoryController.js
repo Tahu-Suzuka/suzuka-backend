@@ -12,6 +12,11 @@ class CategoryController {
         }
         try {
             const data = req.body;
+            if (req.file) {
+                const imagePath = req.file.path.replace(/\\/g, "/").replace("public/", "/");
+                data.image = imagePath;
+            }
+
             const category = await categoryService.create(data);
             res.status(201).json({
                 message: "Berhasil membuat kategori baru",
@@ -66,6 +71,11 @@ class CategoryController {
         try {
             const { id } = req.params;
             const data = req.body;
+            if (req.file) {
+                const imagePath = req.file.path.replace(/\\/g, "/").replace("public/", "/");
+                data.image = imagePath;
+            }
+
             const category = await categoryService.update(id, data);
             if (!category) {
                 return res.status(404).json({

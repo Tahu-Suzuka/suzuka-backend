@@ -1,12 +1,21 @@
 import { body } from 'express-validator';
+import { ProductVariation } from '../models/productVariationModel.js'; 
 
 const validateItemsArray = () =>
     body('items')
         .isArray({ min: 1 }).withMessage('Input harus berupa array "items" yang tidak kosong.');
 
-const validateProductIdInArray = () =>
-    body('items.*.productId') // Untuk SETIAP elemen (*) di dalam array items, cari properti productId di dalamnya, lalu terapkan validasi ini
-        .notEmpty().withMessage('productId di dalam items tidak boleh kosong.');
+const validateVariationIdInArray = () =>
+    body('items.*.variationId')
+        .notEmpty().withMessage('variationId tidak boleh kosong.')
+        .isUUID().withMessage('Format variationId tidak valid.')
+        .custom(async (value) => {
+            // Validasi tambahan: pastikan variasi benar-benar ada di database
+            const variation = await ProductVariation.findByPk(value);
+            if (!variation) {
+                return Promise.reject(`Variasi dengan ID ${value} tidak ditemukan.`);
+            }
+        });
 
 const validateQuantityInArray = () =>
     body('items.*.quantity')
@@ -17,13 +26,13 @@ const validateQuantityInArray = () =>
 
 export const validateAddItem = [
     validateItemsArray(),
-    validateProductIdInArray(),
+    validateVariationIdInArray(),
     validateQuantityInArray()
 ];
 
 
 export const validateUpdateItem = [
     validateItemsArray().optional({ checkFalsy: false }),
-    validateProductIdInArray().optional({ checkFalsy: false }),
+    validateVariationIdInArray().optional({ checkFalsy: false }),
     validateQuantityInArray().optional({ checkFalsy: false })
 ];

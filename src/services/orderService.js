@@ -5,36 +5,33 @@ import { Product } from '../models/productModel.js';
 import { User } from '../models/userModel.js';
 import { Cart } from '../models/cartModel.js';
 import { VoucherService } from './voucherService.js';
+import { CartService } from './cartService.js';
+import { ProductVariation } from '../models/productVariationModel.js'; 
 import snap from '../utils/midtrans.js';
 
 const voucherService = new VoucherService();
+const cartService = new CartService(); 
 
 class OrderService {
  async createOrder(userId, orderData) {
         const user = await User.findByPk(userId);
         if (!user) throw new Error("User tidak ditemukan.");
-        if (!user.address || !user.phone) throw new Error("Harap lengkapi alamat dan nomor HP Anda di profil sebelum melanjutkan checkout.");
+        if (!user.address || !user.phone) throw new Error("Harap lengkapi alamat dan nomor HP Anda di profil.");
 
-        // Ambil voucherCode juga
+        // Frontend sekarang mengirim 'items' berisi variationId
         const { items, note, shipPrice = 0, voucherCode } = orderData; 
-
-        if (!items || items.length === 0) {
-            throw new Error("Data 'items' dibutuhkan untuk membuat pesanan.");
-        }
+        if (!items || items.length === 0) throw new Error("Data 'items' dibutuhkan.");
 
         const t = await sequelize.transaction();
         try {
             let subtotal = 0;
-            const productPromises = items.map(async (item) => {
-                const product = await Product.findByPk(item.productId);
-                if (!product) throw new Error(`Produk dengan ID ${item.productId} tidak ditemukan.`);
-                subtotal += product.price * item.quantity;
-                return { ...item, price: product.price };
+            const variationPromises = items.map(async (item) => {
+                const variation = await ProductVariation.findByPk(item.variationId);
+                if (!variation) throw new Error(`Variasi produk dengan ID ${item.variationId} tidak ditemukan.`);
+                subtotal += variation.price * item.quantity;
+                return { ...item, price: variation.price };
             });
-
-            // itemsWithPrice sekarang berisi productId, quantity, dan price
-            const itemsWithPrice = await Promise.all(productPromises);
-            
+            const itemsWithPrice = await Promise.all(variationPromises);
             let discountAmount = 0;
             if (voucherCode) {
                 const voucher = await voucherService.getAndValidateVoucher(voucherCode);
@@ -51,27 +48,26 @@ class OrderService {
                 }
             }
 
-            let totalPayment = (subtotal + shipPrice) - discountAmount;
+            const serviceFee = 4000;
+            let totalPayment = (subtotal + shipPrice + serviceFee) - discountAmount;
             if (totalPayment < 0) totalPayment = 0;
-            
+
             const newOrder = await Order.create({
-                userId, subtotal, shipPrice, discountAmount,
+                userId, subtotal, shipPrice, serviceFee, discountAmount,
                 voucherCode: voucherCode || null,
                 totalPayment, note,
             }, { transaction: t });
-            
-            const orderItemsPromises = itemsWithPrice.map(item => {
-                return OrderItem.create({
-                    orderId: newOrder.id,
-                    productId: item.productId,
-                    quantity: item.quantity,
-                    price: item.price, 
-                }, { transaction: t });
-            });
-            
+
+            const orderItemsPromises = itemsWithPrice.map(item => OrderItem.create({
+                orderId: newOrder.id,
+                productVariationId: item.variationId, 
+                quantity: item.quantity,
+                price: item.price, 
+            }, { transaction: t }));
+
             await Promise.all(orderItemsPromises);
             await t.commit();
-            return Order.findByPk(newOrder.id, { include: [{ model: OrderItem, as: 'items', include: ['product'] }] });
+            return this.getOrderDetails(newOrder.id, userId);
 
         } catch (error) {
             await t.rollback();
@@ -79,47 +75,28 @@ class OrderService {
         }
     }
 
-      async createOrderFromCart(userId, orderData) {
+     async createOrderFromCart(userId, orderData) {
         const user = await User.findByPk(userId);
-        
-        if (!user) {
-            throw new Error("User tidak ditemukan.");
-        }
-
-        if (!user.address || !user.phone) {
-            throw new Error("Harap lengkapi alamat dan nomor HP Anda di profil sebelum melanjutkan checkout.");
-        }
+        if (!user) throw new Error("User tidak ditemukan.");
+        if (!user.address || !user.phone) throw new Error("Harap lengkapi alamat dan nomor HP Anda di profil.");
 
         const { note, shipPrice = 0, voucherCode } = orderData;
-        const cartItems = await Cart.findAll({ where: { userId }, include: ['product'] });
-
-        if (!cartItems || cartItems.length === 0) {
-            throw new Error("Keranjang belanja kosong.");
-        }
+        
+        const { carts, totalPayment: subtotal } = await cartService.getCart(userId);
+        if (!carts || carts.length === 0) throw new Error("Keranjang belanja kosong.");
 
         const t = await sequelize.transaction();
-
         try {
-            let subtotal = 0;
-            cartItems.forEach(cartItem => {
-                subtotal += cartItem.product.price * cartItem.quantity;
-            });
-
             let discountAmount = 0;
             if (voucherCode) {
                 const voucher = await voucherService.getAndValidateVoucher(voucherCode);
-                if (subtotal < voucher.minPurchase) {
-                    throw new Error(`Minimum pembelian untuk voucher ${voucherCode} tidak terpenuhi.`);
-                }
+                if (subtotal < voucher.minPurchase) throw new Error(`Minimum pembelian untuk voucher ${voucherCode} tidak terpenuhi.`);
+                
                 switch (voucher.type) {
-                    case 'POTONGAN_HARGA':
-                        discountAmount = voucher.value;
-                        break;
+                    case 'POTONGAN_HARGA': discountAmount = voucher.value; break;
                     case 'PERSENTASE':
-                        let calculatedDiscount = subtotal * (voucher.value / 100);
-                        discountAmount = voucher.maxDiscount && calculatedDiscount > voucher.maxDiscount 
-                            ? voucher.maxDiscount 
-                            : calculatedDiscount;
+                        let calcDiscount = subtotal * (voucher.value / 100);
+                        discountAmount = voucher.maxDiscount && calcDiscount > voucher.maxDiscount ? voucher.maxDiscount : calcDiscount;
                         break;
                     case 'POTONGAN_ONGKIR':
                         discountAmount = voucher.value > shipPrice ? shipPrice : voucher.value;
@@ -127,124 +104,125 @@ class OrderService {
                 }
             }
 
-            let totalPayment = (subtotal + shipPrice) - discountAmount;
-            if (totalPayment < 0) {
-                totalPayment = 0;
-            }
+            const serviceFee = 4000;
+            let totalPayment = (subtotal + shipPrice + serviceFee) - discountAmount;
+            if (totalPayment < 0) totalPayment = 0;
 
             const newOrder = await Order.create({
-                userId,
-                subtotal,
-                shipPrice,
-                discountAmount,
+                userId, subtotal, shipPrice, serviceFee, discountAmount,
                 voucherCode: voucherCode || null,
-                totalPayment,
-                note,
+                totalPayment, note,
             }, { transaction: t });
 
-            const orderItemsPromises = cartItems.map(cartItem => {
-                return OrderItem.create({
-                    orderId: newOrder.id,
-                    productId: cartItem.productId,
-                    quantity: cartItem.quantity,
-                    price: cartItem.product.price,
-                }, { transaction: t });
-            });
+            const orderItemsPromises = carts.map(cartItem => OrderItem.create({
+                orderId: newOrder.id,
+                productVariationId: cartItem.productVariationId, 
+                quantity: cartItem.quantity,
+                price: cartItem.variation.price, 
+            }, { transaction: t }));
 
             await Promise.all(orderItemsPromises);
             await Cart.destroy({ where: { userId } }, { transaction: t });
             await t.commit();
-
-            return Order.findByPk(newOrder.id, {
-                include: [{
-                    model: OrderItem,
-                    as: 'items',
-                    include: ['product']
-                }]
-            });
+            
+            return this.getOrderDetails(newOrder.id, userId);
 
         } catch (error) {
             await t.rollback();
-            throw new Error(`Gagal membuat pesanan: ${error.message}`);
+            throw new Error(`Gagal membuat pesanan dari keranjang: ${error.message}`);
         }
     }
 
-     async createManualOrder(orderData) {
-        // userId, items, note, dan shipPrice diambil dari orderData (req.body)
+       async createManualOrder(orderData) {
+        // Admin akan mengirim userId dan items yang berisi variationId
         const { userId, items, note, shipPrice = 0 } = orderData;
 
         const t = await sequelize.transaction();
         try {
             let subtotal = 0;
-            // Kita perlu mengambil harga dari setiap produk untuk menghitung subtotal
-            const productPromises = items.map(async (item) => {
-                const product = await Product.findByPk(item.productId);
-                // Validasi di middleware sudah memastikan produk ada, tapi ini adalah pengaman tambahan
-                if (!product) throw new Error(`Produk dengan ID ${item.productId} tidak ditemukan.`);
-                subtotal += product.price * item.quantity;
-                // Kembalikan item beserta harganya untuk disimpan di order_items
-                return { ...item, price: product.price };
+            // Ambil detail dan harga dari setiap variasi
+            const variationPromises = items.map(async (item) => {
+                const variation = await ProductVariation.findByPk(item.variationId);
+                if (!variation) {
+                    throw new Error(`Variasi produk dengan ID ${item.variationId} tidak ditemukan.`);
+                }
+                subtotal += variation.price * item.quantity;
+                // Kembalikan item beserta harga dan data penting lainnya
+                return { ...item, price: variation.price };
             });
-            const itemsWithPrice = await Promise.all(productPromises);
+            const itemsWithPrice = await Promise.all(variationPromises);
 
-            // Untuk pesanan manual, kita asumsikan tidak ada diskon
+            // Untuk pesanan manual, kita asumsikan tidak ada diskon dan status langsung 'Diproses'
             const discountAmount = 0;
             const totalPayment = subtotal + shipPrice;
 
             const newOrder = await Order.create({
-                userId, // <-- userId pelanggan dari body request
+                userId,
                 subtotal,
                 shipPrice,
+                serviceFee,
                 discountAmount,
                 totalPayment,
                 note,
+                paymentMethod: paymentMethod || null,
                 orderStatus: 'Diproses' 
             }, { transaction: t });
 
             const orderItemsPromises = itemsWithPrice.map(item => OrderItem.create({
                 orderId: newOrder.id,
-                productId: item.productId,
+                productVariationId: item.variationId, 
                 quantity: item.quantity,
-                price: item.price,
+                price: item.price, 
             }, { transaction: t }));
 
             await Promise.all(orderItemsPromises);
             await t.commit();
             
-            return Order.findByPk(newOrder.id, { include: ['items'] });
+            return this.getOrderDetails(newOrder.id, userId);
         } catch (error) {
             await t.rollback();
             throw new Error(`Gagal membuat pesanan manual: ${error.message}`);
         }
     }
 
-    async getOrdersByUser(userId) {
-        const orders = await Order.findAll({
+     async getOrdersByUser(userId) {
+        return await Order.findAll({
             where: { userId },
             order: [['orderDate', 'DESC']],
-             include: [{
-                model: OrderItem,
-                as: 'items',
-                include: [{ 
-                    model: Product,
-                    as: 'product',
-                    attributes: ['product_name', 'main_image', 'price']
-                }]
-            }]
-        });
-        return orders;
-    }
-
-    async getOrderDetails(orderId, userId) {
-        const order = await Order.findOne({
-            where: { id: orderId, userId }, // Pastikan user hanya bisa lihat order miliknya
             include: [{
                 model: OrderItem,
                 as: 'items',
                 include: [{
-                    model: Product,
-                    as: 'product',
-                    attributes: ['id', 'product_name', 'main_image', 'price']
+                    model: ProductVariation,
+                    as: 'variation',
+                    attributes: ['id', 'name', 'price'],
+                    include: [{
+                        model: Product,
+                        as: 'product',
+                        attributes: ['id', 'product_name', 'mainImage']
+                    }]
+                }]
+            }]
+        });
+    }
+
+    async getOrderDetails(orderId, userId) {
+        const order = await Order.findOne({
+            where: { id: orderId, userId },
+            include: [{
+                model: OrderItem,
+                as: 'items',
+                // --- INCLUDE BERSARANG 3 TINGKAT ---
+                include: [{
+                    model: ProductVariation,
+                    as: 'variation',
+                    attributes: ['id', 'name', 'price'],
+                    // Ambil juga data produk induknya
+                    include: [{
+                        model: Product,
+                        as: 'product',
+                        attributes: ['id', 'product_name', 'mainImage']
+                    }]
                 }]
             }, {
                 model: User,
@@ -323,6 +301,7 @@ class OrderService {
             const orderId = statusResponse.order_id;
             const transactionStatus = statusResponse.transaction_status;
             const fraudStatus = statusResponse.fraud_status;
+            const paymentType = statusResponse.payment_type;
 
             const order = await Order.findByPk(orderId);
             if (!order) {
@@ -330,9 +309,12 @@ class OrderService {
                 return;
             }
 
-            if (order.orderStatus === 'Menunggu Pembayaran') {
+           if (order.orderStatus === 'Menunggu Pembayaran') {
                 if ((transactionStatus === 'capture' && fraudStatus === 'accept') || transactionStatus === 'settlement') {
-                    await order.update({ orderStatus: 'Diproses' });
+                    await order.update({ 
+                        orderStatus: 'Diproses',
+                        paymentMethod: paymentType
+                    });
                 } else if (transactionStatus === 'cancel' || transactionStatus === 'expire' || transactionStatus === 'deny') {
                     await order.update({ orderStatus: 'Dibatalkan' });
                 }

@@ -25,6 +25,11 @@ const CategorySchema = {
     category_name: {
         allowNull: false,
         type: DataTypes.STRING,
+    },
+        image: {
+        type: DataTypes.STRING,
+        allowNull: true,
+        field: 'category_image',
     }
 };
 

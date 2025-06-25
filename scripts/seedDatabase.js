@@ -1,10 +1,21 @@
-// scripts/seedDatabase.js
-import "../src/configs/database.js"; // Inisialisasi koneksi database
+import "../src/configs/database.js";
 import { User } from "../src/models/userModel.js";
 import { Category } from "../src/models/categoryModel.js";
 import { Product } from "../src/models/productModel.js";
+import { ProductVariation } from "../src/models/productVariationModel.js";
 import bcrypt from "bcrypt";
 import { v4 as uuidv4 } from "uuid";
+
+const categoryNames = ["Tahu Original", "Tahu Stik", "Tahu Varian Rasa", "Aneka Tahu Olahan"];
+const productsWithVariations = [
+  { productName: "Tahu Kuning", categoryName: "Tahu Original", description: "Tahu kuning legendaris dengan tekstur lembut.", variations: [ { name: "Kecil", price: 8000 }, { name: "Normal", price: 9000 }, { name: "Besar", price: 10000 }] },
+  { productName: "Tahu Putih", categoryName: "Tahu Original", description: "Tahu putih segar, cocok untuk segala masakan.", variations: [ { name: "Kecil", price: 8000 }, { name: "Normal", price: 9000 }, { name: "Besar", price: 10000 }] },
+  { productName: "Tahu Stik Kuning", categoryName: "Tahu Stik", description: "Camilan stik tahu kuning yang renyah.", variations: [{ name: "Normal", price: 8000 }] },
+  { productName: "Tahu Stik Putih", categoryName: "Tahu Stik", description: "Camilan stik tahu putih yang gurih.", variations: [{ name: "Normal", price: 8000 }] },
+  { productName: "Tahu Pedas", categoryName: "Tahu Varian Rasa", description: "Tahu dengan isian pedas menggugah selera.", variations: [{ name: "Normal", price: 8000 }] },
+  { productName: "Tahu Hijau", categoryName: "Tahu Varian Rasa", description: "Tahu unik dengan ekstrak sayuran hijau.", variations: [{ name: "Normal", price: 8000 }] },
+  { productName: "Kerupuk Tahu", categoryName: "Aneka Tahu Olahan", description: "Kerupuk renyah dari ampas tahu berkualitas.", variations: [ { name: "250gr", price: 10000 }, { name: "500gr", price: 20000 }] },
+];
 
 const seedDatabase = async () => {
   try {
@@ -50,99 +61,36 @@ const seedDatabase = async () => {
       console.log("User 'Jack Rochmat' sudah ada.");
     }
 
-    // =================================================================
-    // 2. BUAT KATEGORI
-    // =================================================================
     console.log("Membuat kategori...");
-    // --- PERUBAHAN STRUKTUR KATEGORI ---
-    const categoryNames = [
-      "Tahu Kuning",
-      "Tahu Putih",
-      "Tahu Stik",
-      "Tahu Varian Rasa", // Untuk Tahu Pedas & Tahu Hijau
-      "Aneka Tahu Olahan", // Untuk Kerupuk Tahu
-    ];
 
-    const categoryPromises = categoryNames.map((name) => {
-      return Category.findOrCreate({
-        where: { category_name: name },
-        defaults: { id: uuidv4(), category_name: name },
-      });
-    });
+    const categoryPromises = categoryNames.map(name => Category.findOrCreate({ where: { category_name: name }, defaults: { id: uuidv4(), category_name: name } }));
+    const createdCategories = await Promise.all(categoryPromises);
+    const categoriesMap = new Map(createdCategories.map(([category]) => [category.category_name, category.id]));
 
-    const createdCategoriesResult = await Promise.all(categoryPromises);
-    const categoriesMap = new Map();
-    createdCategoriesResult.forEach(([category, created]) => {
-      categoriesMap.set(category.category_name, category.id);
-      if (created) {
-        console.log(`- Kategori '${category.category_name}' berhasil dibuat.`);
-      } else {
-        console.log(`- Kategori '${category.category_name}' sudah ada.`);
-      }
-    });
+    console.log("Membuat produk dan variasinya...");
+    for (const productData of productsWithVariations) {
+        const categoryId = categoriesMap.get(productData.categoryName);
+        if(!categoryId) continue;
 
-    // =================================================================
-    // 3. BUAT PRODUK
-    // =================================================================
-    console.log("Membuat produk...");
-    // --- PERUBAHAN STRUKTUR PRODUK ---
-    const productsData = [
-      // Tahu Kuning
-      { name: "Tahu Kuning Kecil", category: "Tahu Kuning", price: 12000 }, //9x9
-      { name: "Tahu Kuning Normal", category: "Tahu Kuning", price: 13000 }, //10x10
-      { name: "Tahu Kuning Besar", category: "Tahu Kuning", price: 14000 }, //10x11
-      // Tahu Putih
-      { name: "Tahu Putih Kecil", category: "Tahu Putih", price: 12000 }, //9x9
-      { name: "Tahu Putih Normal", category: "Tahu Putih", price: 13000 }, //10x10
-      { name: "Tahu Putih Besar", category: "Tahu Putih", price: 14000 }, //10x11
-      // Tahu Stik
-      { name: "Tahu Stik Putih", category: "Tahu Stik", price: 12500 },
-      { name: "Tahu Stik Kuning", category: "Tahu Stik", price: 12500 },
-      // Tahu Varian Rasa
-      { name: "Tahu Pedas", category: "Tahu Varian Rasa", price: 13000 }, //10x10 Normal
-      { name: "Tahu Hijau", category: "Tahu Varian Rasa", price: 13000 }, //10x10 Normal
-      // Aneka Tahu Olahan
-      { name: "Kerupuk Tahu 250gr", category: "Aneka Tahu Olahan", price: 15000 }, //250gr
-      { name: "Kerupuk Tahu 500gr", category: "Aneka Tahu Olahan", price: 25000 }, //500gr
-    ];
+        const [product, created] = await Product.findOrCreate({
+            where: { product_name: productData.productName },
+            defaults: { id: uuidv4(), ...productData, categoryId, userId: adminId }
+        });
 
-    const productPromises = productsData.map((prod) => {
-      const categoryId = categoriesMap.get(prod.category);
-      if (!categoryId) {
-        console.warn(`Peringatan: Kategori '${prod.category}' untuk produk '${prod.name}' tidak ditemukan. Dilewati.`);
-        return Promise.resolve(null);
-      }
-      return Product.findOrCreate({
-        where: { product_name: prod.name },
-        defaults: {
-          id: uuidv4(),
-          product_name: prod.name,
-          description: `Deskripsi lengkap untuk ${prod.name}, dibuat dari bahan berkualitas terbaik.`,
-          price: prod.price,
-          main_image: "https://via.placeholder.com/150",
-          categoryId: categoryId,
-          userId: adminId,
-        },
-      });
-    });
-
-    const createdProductsResult = await Promise.all(productPromises);
-    createdProductsResult.forEach((result) => {
-      if (result) {
-        const [product, created] = result;
-        if (created) {
-          console.log(`- Produk '${product.product_name}' berhasil dibuat.`);
+        if(created){
+            console.log(`- Produk '${product.product_name}' dibuat.`);
+            const variationsToCreate = productData.variations.map(v => ({ ...v, id: uuidv4(), productId: product.id }));
+            await ProductVariation.bulkCreate(variationsToCreate);
+            console.log(`  - ${variationsToCreate.length} variasi ditambahkan.`);
         } else {
-          console.log(`- Produk '${product.product_name}' sudah ada.`);
+            console.log(`- Produk '${product.product_name}' sudah ada.`);
         }
-      }
-    });
+    }
 
-    console.log("\nProses seeding database berhasil diselesaikan.");
+    console.log("\nProses seeding berhasil.");
   } catch (err) {
-    console.error("\nTerjadi kesalahan saat proses seeding:", err.message);
+    console.error("\nError saat seeding:", err);
   } finally {
-    console.log("Keluar dari skrip.");
     process.exit();
   }
 };

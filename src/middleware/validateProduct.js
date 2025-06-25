@@ -13,10 +13,20 @@ const validateDescription = () =>
         .isString().withMessage('Deskripsi produk harus berupa teks')
         .isLength({ min: 10 }).withMessage('Deskripsi produk harus terdiri dari minimal 10 karakter');
 
-const validatePrice = () =>
-    body('price')
-        .notEmpty().withMessage('Harga produk tidak boleh kosong')
-        .isNumeric().withMessage('Harga produk harus berupa angka')
+const validateVariations = () =>
+    body('variations')
+        .isArray({ min: 1, max: 3 }).withMessage('Produk harus memiliki minimal 1 dan maksimal 3 variasi.')
+        .custom((variations) => {
+            for (const v of variations) {
+                if (!v.name || v.name.trim() === '') {
+                    throw new Error('Setiap variasi harus memiliki nama.');
+                }
+                if (v.price === undefined || v.price === null || !/^\d+(\.\d+)?$/.test(v.price)) {
+                    throw new Error('Setiap variasi harus memiliki harga berupa angka.');
+                }
+            }
+            return true;
+        });
 
 const validateCategoryId = () =>
     body('categoryId')
@@ -32,14 +42,14 @@ const validateCategoryId = () =>
 export const validateCreateProduct = [
     validateProductName(),
     validateDescription(),
-    validatePrice(),
+    validateVariations(),
     validateCategoryId()
 ];
 
 export const validateUpdateProduct = [
     validateProductName().optional({ checkFalsy: false }),
     validateDescription().optional({ checkFalsy: false }),
-    validatePrice().optional({ checkFalsy: false }),
+    validateVariations().optional({ checkFalsy: false }),
     validateCategoryId().optional({ checkFalsy: false }),
 
     body('id')

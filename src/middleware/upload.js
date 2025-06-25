@@ -66,6 +66,19 @@ const reviewStorage = multer.diskStorage({
   },
 });
 
+const categoryStorage = multer.diskStorage({
+  destination: (req, file, cb) => {
+    const dir = 'public/images/categories';
+    ensureDir(dir);
+    cb(null, dir);
+  },
+  filename: (req, file, cb) => {
+    const timestamp = Date.now();
+    const extension = path.extname(file.originalname);
+    cb(null, `category-${timestamp}${extension}`);
+  },
+});
+
 
 export const uploadProfile = multer({
   storage: profileStorage,
@@ -77,13 +90,16 @@ export const uploadProduct = multer({
   storage: productStorage,
   fileFilter: imageFilter,
   limits: { fileSize: 5 * 1024 * 1024 },
-}).fields([
-    { name: 'mainImage', maxCount: 1 },
-    { name: 'additionalImages', maxCount: 3 }
-]);
+}).any();
 
 export const uploadReview = multer({
   storage: reviewStorage,
   fileFilter: imageFilter,
   limits: { fileSize: 2 * 1024 * 1024 },
 }).array('review_images', 2); 
+
+export const uploadCategory = multer({
+  storage: categoryStorage,
+  fileFilter: imageFilter,
+  limits: { fileSize: 2 * 1024 * 1024 },
+}).single('category_image');

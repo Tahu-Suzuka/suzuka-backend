@@ -1,25 +1,20 @@
 import { Model, DataTypes } from 'sequelize';
 import { TABLE_NAME_USERS } from './userModel.js';
-import { TABLE_NAME_PRODUCTS } from './productModel.js';
+import { TABLE_NAME_VARIATIONS } from './productVariationModel.js';
 
-// Diubah dari TABLE_NAME_CART_ITEMS menjadi TABLE_NAME_CARTS
 export const TABLE_NAME_CARTS = 'carts';
 
-// Diubah dari CartItem menjadi Cart
 export class Cart extends Model {
     static config(sequelize) {
         return {
             sequelize,
-            // Diubah dari 'cart_items' menjadi 'carts'
             tableName: TABLE_NAME_CARTS,
-            // Diubah dari 'CartItem' menjadi 'Cart'
             modelName: 'Cart',
             timestamps: true,
         };
     }
 }
 
-// Diubah dari CartItemSchema menjadi CartSchema
 export const CartSchema = {
     id: {
         allowNull: false,
@@ -44,15 +39,15 @@ export const CartSchema = {
         onUpdate: 'CASCADE',
         onDelete: 'CASCADE',
     },
-    productId: {
-        field: 'product_id',
+     productVariationId: {
+        field: 'variation_id',
         allowNull: false,
-        type: DataTypes.STRING,
+        type: DataTypes.UUID, 
         references: {
-            model: TABLE_NAME_PRODUCTS,
-            key: 'product_id',
+            model: TABLE_NAME_VARIATIONS, 
+            key: 'variation_id',
         },
         onUpdate: 'CASCADE',
         onDelete: 'CASCADE',
-    },
+    }
 };

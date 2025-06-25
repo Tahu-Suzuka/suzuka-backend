@@ -3,6 +3,7 @@ import CategoryController from '../controllers/categoryController.js';
 import { validateCreateCategory, validateUpdateCategory } from '../middleware/validateCategory.js';
 import { authenticate } from '../middleware/auth.js';
 import { validateAdmin } from '../middleware/validateAdmin.js';
+import { uploadCategory } from '../middleware/upload.js';
 
 const router = Router();
 router.get('/', CategoryController.getAllCategories);
@@ -12,6 +13,7 @@ router.post(
     '/', 
     authenticate, 
     validateAdmin, 
+    uploadCategory,
     validateCreateCategory,
     CategoryController.createCategory
 );
@@ -19,7 +21,8 @@ router.post(
 router.put(
     '/:id', 
     authenticate, 
-    validateAdmin, 
+    validateAdmin,
+    uploadCategory, 
     validateUpdateCategory,
     CategoryController.updateCategory
 );

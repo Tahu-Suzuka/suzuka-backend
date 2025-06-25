@@ -14,18 +14,16 @@ class ProductController {
             const adminId = req.user.id;
             const data = { ...req.body, userId: adminId };
 
-            if (req.files) {
-              // Untuk gambar utama
-              if (req.files.mainImage && req.files.mainImage[0]) {
-                data.mainImage = req.files.mainImage[0].path.replace(/\\/g, "/").replace("public/", "/");
+             if (req.files && req.files.length > 0) {
+              const mainImageFile = req.files.find(f => f.fieldname === 'mainImage');
+              const additionalImageFiles = req.files.filter(f => f.fieldname === 'additionalImages');
+
+              if (mainImageFile) {
+                data.mainImage = mainImageFile.path.replace(/\\/g, "/").replace("public/", "/");
               }
-              // Untuk gambar tambahan
-              if (req.files.additionalImages && req.files.additionalImages.length > 0) {
-                req.files.additionalImages.forEach((file, index) => {
-                    // Masukkan ke kolom additionalImage1, additionalImage2, dst.
-                    data[`additionalImage${index + 1}`] = file.path.replace(/\\/g, "/").replace("public/", "/");
-                });
-              }
+              additionalImageFiles.forEach((file, index) => {
+                  data[`additionalImage${index + 1}`] = file.path.replace(/\\/g, "/").replace("public/", "/");
+              });
             }
 
             const product = await productService.create(data);
@@ -59,20 +57,20 @@ class ProductController {
             }
         }
 
-        async getAllProducts(req, res) {
-                try {
-                    // req.query akan berisi semua parameter dari URL (?key=value&key2=value2)
-                    const result = await productService.getAll(req.query);
-                    res.status(200).json({
-                        message: "Berhasil mengambil data semua produk",
-                        data: result,
-                    });
-                } catch (error) {
-                    res.status(500).json({
-                        message: error.message || "Gagal mengambil data produk",
-                    });
-                }
-            }
+       async getAllProducts(req, res) {
+        try {
+            const products = await productService.getAll(req.query);
+            
+            res.status(200).json({
+                message: "Berhasil mengambil data semua produk",
+                data: products, 
+            });
+        } catch (error) {
+            res.status(500).json({
+                message: error.message || "Gagal mengambil data produk",
+            });
+        }
+    }
 
  async updateProduct(req, res) {
         const errors = validationResult(req);
@@ -90,29 +88,16 @@ class ProductController {
             }
 
             // 2. Proses file-file baru jika ada yang diunggah
-            if (req.files) {
-                // Proses gambar utama (mainImage)
-                if (req.files.mainImage && req.files.mainImage[0]) {
-                    // Hapus gambar utama yang lama jika ada
-                    if (existingProduct.mainImage) {
-                        fs.unlinkSync(path.join('public', existingProduct.mainImage));
-                    }
-                    // Simpan path gambar utama yang baru ke objek data
-                    data.mainImage = req.files.mainImage[0].path.replace(/\\/g, "/").replace("public/", "/");
-                }
+           if (req.files && req.files.length > 0) {
+              const mainImageFile = req.files.find(f => f.fieldname === 'mainImage');
+              const additionalImageFiles = req.files.filter(f => f.fieldname === 'additionalImages');
 
-                // Proses gambar tambahan (additionalImages)
-                if (req.files.additionalImages && req.files.additionalImages.length > 0) {
-                    req.files.additionalImages.forEach((file, index) => {
-                        const fieldName = `additionalImage${index + 1}`;
-                        // Hapus gambar tambahan yang lama di posisi yang sama jika ada
-                        if (existingProduct[fieldName]) {
-                            fs.unlinkSync(path.join('public', existingProduct[fieldName]));
-                        }
-                        // Simpan path gambar tambahan yang baru ke objek data
-                        data[fieldName] = file.path.replace(/\\/g, "/").replace("public/", "/");
-                    });
-                }
+              if (mainImageFile) {
+                data.mainImage = mainImageFile.path.replace(/\\/g, "/").replace("public/", "/");
+              }
+              additionalImageFiles.forEach((file, index) => {
+                  data[`additionalImage${index + 1}`] = file.path.replace(/\\/g, "/").replace("public/", "/");
+              });
             }
 
             // 3. Panggil service untuk update data produk (termasuk path gambar baru)

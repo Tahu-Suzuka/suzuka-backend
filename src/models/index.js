@@ -6,6 +6,7 @@ import { OrderItem, OrderItemSchema } from "./orderItemModel.js";
 import { Cart, CartSchema } from "./cartModel.js";
 import { Voucher, VoucherSchema } from "./voucherModel.js";
 import { Review, ReviewSchema } from "./reviewModel.js";
+import {ProductVariation, ProductVariationSchema} from "./productVariationModel.js";
 
 const setupModels = (sequelize) => {    
     User.init(UserSchema, User.config(sequelize));
@@ -16,6 +17,7 @@ const setupModels = (sequelize) => {
     Cart.init(CartSchema, Cart.config(sequelize));
     Voucher.init(VoucherSchema, Voucher.config(sequelize));
     Review.init(ReviewSchema, Review.config(sequelize));
+    ProductVariation.init(ProductVariationSchema, ProductVariation.config(sequelize));
 
     // Category punya banyak Product
     Category.hasMany(Product, { foreignKey: 'categoryId', as: 'products' });
@@ -71,5 +73,14 @@ const setupModels = (sequelize) => {
     // Pelanggan bisa memberikan review pada order yang telah selesai
     Order.hasMany(Review, { foreignKey: 'orderId', as: 'reviews' });
     Review.belongsTo(Order, { foreignKey: 'orderId', as: 'order' });
+
+    Product.hasMany(ProductVariation, { foreignKey: 'productId', as: 'variations' });
+    ProductVariation.belongsTo(Product, { foreignKey: 'productId', as: 'product' });
+
+    ProductVariation.hasMany(Cart, { as: 'cartItems', foreignKey: 'productVariationId' });
+    Cart.belongsTo(ProductVariation, { as: 'variation', foreignKey: 'productVariationId' });
+
+    ProductVariation.hasMany(OrderItem, { as: 'orderItems', foreignKey: 'productVariationId' });
+    OrderItem.belongsTo(ProductVariation, { as: 'variation', foreignKey: 'productVariationId' });
 }
 export default setupModels;

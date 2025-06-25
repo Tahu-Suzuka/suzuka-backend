@@ -1,7 +1,6 @@
 import { UserService } from "../services/userService.js";
 import { validationResult } from "express-validator";
 
-
   const userService = new UserService();
 
   class UserController {

@@ -32,10 +32,6 @@ const ProductSchema = {
         allowNull: false,
         type: DataTypes.STRING,
     },
-    price: {
-        allowNull: false,
-        type: DataTypes.FLOAT,
-    },
        mainImage: {
         field: 'main_image',
         type: DataTypes.STRING,

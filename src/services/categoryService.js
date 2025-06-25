@@ -1,6 +1,8 @@
 import "../configs/database.js";
 import crypto from "crypto";
 import { Category } from "../models/categoryModel.js";
+import fs from 'fs';
+import path from 'path'; 
 
 
 class CategoryService {
@@ -29,6 +31,15 @@ class CategoryService {
         const category = await this.getById(id);
         if (!category) {
             return null;
+        }
+
+         if (data.image) {
+            if (category.image) {
+                const oldImagePath = path.join('public', category.image);
+                if (fs.existsSync(oldImagePath)) {
+                    fs.unlinkSync(oldImagePath);
+                }
+            }
         }
         const updatedCategory = await category.update(data);
         return updatedCategory;

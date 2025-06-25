@@ -1,7 +1,6 @@
-// src/models/orderItemModel.js
 import { Model, DataTypes } from 'sequelize';
 import { TABLE_NAME_ORDERS } from './orderModel.js';
-import { TABLE_NAME_PRODUCTS } from './productModel.js';
+import { TABLE_NAME_VARIATIONS } from './productVariationModel.js';
 
 const TABLE_NAME_ORDER_ITEMS = 'order_items';
 
@@ -33,13 +32,13 @@ const OrderItemSchema = {
             key: 'order_id',
         },
     },
-    productId: {
-        field: 'product_id',
+      productVariationId: {
+        field: 'variation_id',
         allowNull: false,
-        type: DataTypes.STRING, // Sesuaikan dengan tipe ID produk Anda
+        type: DataTypes.UUID,
         references: {
-            model: TABLE_NAME_PRODUCTS,
-            key: 'product_id',
+            model: TABLE_NAME_VARIATIONS, 
+            key: 'variation_id',
         },
     },
     quantity: {
@@ -48,7 +47,7 @@ const OrderItemSchema = {
     },
     price: {
         allowNull: false,
-        type: DataTypes.FLOAT, // Harga produk pada saat checkout
+        type: DataTypes.FLOAT,
     },
 };
 

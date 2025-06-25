@@ -40,7 +40,6 @@ class ReviewController {
             const { productId } = req.params; 
             const reviews = await reviewService.getReviewsForProduct(productId);
             if (!reviews) {
-                // Ini terjadi jika produknya sendiri tidak ditemukan (dari perbaikan kita sebelumnya)
                 return res.status(404).json({ message: `Produk dengan ID ${productId} tidak ditemukan.` });
             }
 
