@@ -10,21 +10,21 @@ router.get('/', CategoryController.getAllCategories);
 router.get('/:id', CategoryController.getCategoryById);
 
 router.post(
-    '/', 
-    authenticate, 
-    validateAdmin, 
-    uploadCategory,
-    validateCreateCategory,
-    CategoryController.createCategory
+  '/',
+  authenticate,
+  validateAdmin,
+  uploadCategory,
+  validateCreateCategory,
+  CategoryController.createCategory
 );
 
 router.put(
-    '/:id', 
-    authenticate, 
-    validateAdmin,
-    uploadCategory, 
-    validateUpdateCategory,
-    CategoryController.updateCategory
+  '/:id',
+  authenticate,
+  validateAdmin,
+  uploadCategory,
+  validateUpdateCategory,
+  CategoryController.updateCategory
 );
 
 router.delete('/:id', authenticate, validateAdmin, CategoryController.deleteCategory);

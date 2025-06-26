@@ -5,30 +5,57 @@ import { validationResult } from 'express-validator';
 const reportService = new ReportService();
 
 class ReportController {
-    async generateOrderReport(req, res) {
-        const errors = validationResult(req);
-        if (!errors.isEmpty()) {
-            return res.status(422).json({ errors: errors.array() });
-        }
+  async generateProductSalesReport(req, res) {
+    const errors = validationResult(req);
+    if (!errors.isEmpty()) {
+      return res.status(422).json({ errors: errors.array() });
+    }
+    try {
+      const filePath = await reportService.createProductSalesReportPDF(req.query);
+      res.download(filePath, (err) => {
+        if (err) console.error('Error saat mengirim file PDF:', err);
+        fs.unlinkSync(filePath);
+      });
+    } catch (error) {
+      res.status(500).json({ message: error.message || 'Gagal membuat laporan.' });
+    }
+  }
+
+  async getProductSalesReport(req, res) {
+    const errors = validationResult(req);
+    if (!errors.isEmpty()) {
+      return res.status(422).json({ errors: errors.array() });
+    }
+    try {
+      const reportData = await reportService.getProductSalesReport(req.query);
+      res
+        .status(200)
+        .json({ message: 'Data laporan penjualan berhasil diambil', data: reportData });
+    } catch (error) {
+      res.status(500).json({ message: error.message || 'Gagal mengambil data laporan.' });
+    }
+  }
+
+  // --- Laporan Pesanan Diproses ---
+async generateProcessingReport(req, res) {
         try {
-            const { startDate, endDate } = req.query;
-            if (!startDate || !endDate) {
-                return res.status(400).json({ message: 'Parameter startDate dan endDate dibutuhkan.' });
-            }
-
-            const filePath = await reportService.createOrderReportPDF(startDate, endDate);
-
-            // Kirim file sebagai attachment dan hapus setelah dikirim
+            const filePath = await reportService.createProcessingReportPDF();
             res.download(filePath, (err) => {
-                if (err) {
-                    console.error('Error saat mengirim file:', err);
-                }
-                // Hapus file dari server setelah didownlaod
+                if (err) console.error('Error saat mengirim file:', err);
                 fs.unlinkSync(filePath);
             });
-            
         } catch (error) {
-            res.status(500).json({ message: error.message || 'Gagal membuat laporan.' });
+            res.status(500).json({ message: error.message || 'Gagal membuat laporan operasional.' });
+        }
+    }
+
+    // Method untuk JSON Laporan Pesanan Diproses
+    async getProcessingReport(req, res) {
+        try {
+            const reportData = await reportService.getProcessingReport();
+            res.status(200).json({ message: "Data pesanan diproses berhasil diambil", data: reportData });
+        } catch (error) {
+            res.status(500).json({ message: error.message || 'Gagal mengambil data laporan.' });
         }
     }
 }

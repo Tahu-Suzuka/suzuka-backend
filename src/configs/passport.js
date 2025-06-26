@@ -1,13 +1,13 @@
-import passport from "passport";
-import { Strategy as GoogleStrategy } from "passport-google-oauth20";
-import { User } from "../models/userModel.js"; 
+import passport from 'passport';
+import { Strategy as GoogleStrategy } from 'passport-google-oauth20';
+import { User } from '../models/userModel.js';
 
 passport.use(
   new GoogleStrategy(
     {
       clientID: process.env.GOOGLE_CLIENT_ID,
       clientSecret: process.env.GOOGLE_CLIENT_SECRET,
-      callbackURL: "/auth/google/callback", // Pastikan ini sesuai dengan yang ada di Google Cloud Console
+      callbackURL: '/auth/google/callback', // Pastikan ini sesuai dengan yang ada di Google Cloud Console
     },
     async (accessToken, refreshToken, profile, done) => {
       try {
@@ -22,7 +22,7 @@ passport.use(
           googleId: profile.id,
           name: profile.displayName,
           email: profile.emails[0].value,
-          password: "google-oauth", // Password dummy
+          password: 'google-oauth', // Password dummy
           isVerified: true, // <-- TAMBAHKAN BARIS INI
         });
 

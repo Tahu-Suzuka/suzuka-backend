@@ -1,8 +1,8 @@
-import {config} from 'dotenv'
-import { Sequelize } from "sequelize";
+import { config } from 'dotenv';
+import { Sequelize } from 'sequelize';
 import setupModels from '../models/index.js';
 
-config()
+config();
 
 const database = new Sequelize(
   process.env.MYSQL_DATABASE, // name database
@@ -10,20 +10,13 @@ const database = new Sequelize(
   process.env.MYSQL_PASSWORD, // password database
   {
     host: process.env.MYSQL_HOST,
-    dialect: "mysql",
-  }
+    dialect: 'mysql',
+    port: process.env.MYSQL_PORT || 3306, 
+  },
 );
 
-// database
-//   .authenticate()
-//   .then(() => {
-//     console.log("Connection has been established successfully.");
-//   })
-//   .catch((error) => {
-//     console.error("Unable to connect to the database: ", error);
-//   });
 database.sync();
 
-setupModels(database)
+setupModels(database);
 
 export default database;

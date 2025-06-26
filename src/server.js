@@ -1,9 +1,9 @@
-import express, { json } from "express";
-import { config } from "dotenv";
-import path from 'path'; 
-import { fileURLToPath } from 'url'; 
+import express, { json } from 'express';
+import { config } from 'dotenv';
+import path from 'path';
+import { fileURLToPath } from 'url';
 import routerApi from './routes/index.js';
-import authRoute from "./routes/authRoute.js";
+import authRoute from './routes/authRoute.js';
 import passport from 'passport';
 import './configs/passport.js';
 import { errorHandler } from './middleware/errorHandler.js';
@@ -21,12 +21,10 @@ app.use(json());
 
 app.use(express.static(path.join(__dirname, 'public')));
 
-
-
 // Routes
-app.use("/auth", authRoute);
-app.get("/", (req, res) => {
-  res.send("Tahu Suzuka Punya Bapak Ade");
+app.use('/auth', authRoute);
+app.get('/', (req, res) => {
+  res.send('Tahu Suzuka Punya Bapak Ade');
 });
 routerApi(app);
 

@@ -1,0 +1,9 @@
+node_modules
+dist
+build
+coverage
+
+package-lock.json
+laporan-*.pdf
+processing-report-*.pdf
+product-sales-*.pdf

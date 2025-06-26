@@ -1,26 +1,23 @@
 import { query } from 'express-validator';
 
-const validateStartDate = () =>
-    query('startDate')
-        .notEmpty()
-        .withMessage('Parameter startDate tidak boleh kosong.')
-        .isISO8601()
-        .withMessage('Format startDate harus YYYY-MM-DD.');
-
-const validateEndDate = () =>
-    query('endDate')
-        .notEmpty()
-        .withMessage('Parameter endDate tidak boleh kosong.')
-        .isISO8601()
-        .withMessage('Format endDate harus YYYY-MM-DD.')
-        .custom((value, { req }) => {
-            if (new Date(value) < new Date(req.query.startDate)) {
-                throw new Error('Tanggal akhir harus setelah atau sama dengan tanggal mulai.');
-            }
-            return true;
-        });
-
 export const validateGetReport = [
-    validateStartDate(),
-    validateEndDate()
+  // Tambahkan validasi untuk parameter 'period' yang baru
+  query('period')
+    .optional()
+    .isIn(['today', 'week', 'month', 'year'])
+    .withMessage('Nilai parameter period tidak valid. Gunakan: today, week, month, atau year.'),
+
+  // Buat startDate dan endDate menjadi opsional, tapi jika ada, harus valid
+  query('startDate').optional().isISO8601().withMessage('Format startDate harus YYYY-MM-DD.'),
+
+  query('endDate')
+    .optional()
+    .isISO8601()
+    .withMessage('Format endDate harus YYYY-MM-DD.')
+    .custom((value, { req }) => {
+      if (req.query.startDate && new Date(value) < new Date(req.query.startDate)) {
+        throw new Error('Tanggal akhir harus setelah atau sama dengan tanggal mulai.');
+      }
+      return true;
+    }),
 ];

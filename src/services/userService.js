@@ -1,17 +1,16 @@
-import { Op } from "sequelize";
-import sequelize from "../configs/database.js";
-import crypto from "crypto";
-import { User } from "../models/userModel.js";
-import { Order } from "../models/orderModel.js";
+import { Op } from 'sequelize';
+import sequelize from '../configs/database.js';
+import crypto from 'crypto';
+import { User } from '../models/userModel.js';
+import { Order } from '../models/orderModel.js';
 
-import bcrypt from "bcrypt";
+import bcrypt from 'bcrypt';
 const SALT_ROUNDS = 10;
 
 class UserService {
   constructor() {}
 
-
-   async create(data) {
+  async create(data) {
     const { name, email, password, address, phone } = data;
 
     const hash = await bcrypt.hash(password, SALT_ROUNDS);
@@ -22,44 +21,42 @@ class UserService {
       password: hash,
       address,
       phone,
-      isVerified: true, 
-      role: 'user' //
+      isVerified: true,
+      role: 'user', //
     });
     return user;
   }
 
- async getAll() {
+  async getAll() {
     const users = await User.findAll({
-        attributes: {
-            include: [
-                [sequelize.fn('COUNT', sequelize.col('orders.order_id')), 'orderCount']
-            ],
-            exclude: ['password', 'otp', 'googleId', 'isVerified']
+      attributes: {
+        include: [[sequelize.fn('COUNT', sequelize.col('orders.order_id')), 'orderCount']],
+        exclude: ['password', 'otp', 'googleId', 'isVerified'],
+      },
+      include: [
+        {
+          model: Order,
+          as: 'orders',
+          attributes: [],
         },
-        include: [{
-            model: Order,
-            as: 'orders',
-            attributes: []
-        }],
-        group: ['User.user_id'],
-        order: [['name', 'ASC']]
+      ],
+      group: ['User.user_id'],
+      order: [['name', 'ASC']],
     });
     return users;
   }
 
   async searchByName(query) {
     if (!query) {
-        return [];
+      return [];
     }
 
     const users = await User.findAll({
-        where: {
-            [Op.or]: [
-                { name: { [Op.like]: `%${query}%` } },
-            ]
-        },
-        limit: 10,
-        attributes: ['id', 'name',]
+      where: {
+        [Op.or]: [{ name: { [Op.like]: `%${query}%` } }],
+      },
+      limit: 10,
+      attributes: ['id', 'name'],
     });
     return users;
   }
@@ -75,11 +72,11 @@ class UserService {
     return res;
   }
 
-    async updateProfile(userId, data) {
+  async updateProfile(userId, data) {
     const { name, address, phone, image } = data;
 
     const user = await User.findByPk(userId);
-    if (!user) throw new Error("User tidak ditemukan");
+    if (!user) throw new Error('User tidak ditemukan');
 
     user.name = name || user.name;
     user.address = address || user.address;

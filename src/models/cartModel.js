@@ -5,49 +5,49 @@ import { TABLE_NAME_VARIATIONS } from './productVariationModel.js';
 export const TABLE_NAME_CARTS = 'carts';
 
 export class Cart extends Model {
-    static config(sequelize) {
-        return {
-            sequelize,
-            tableName: TABLE_NAME_CARTS,
-            modelName: 'Cart',
-            timestamps: true,
-        };
-    }
+  static config(sequelize) {
+    return {
+      sequelize,
+      tableName: TABLE_NAME_CARTS,
+      modelName: 'Cart',
+      timestamps: true,
+    };
+  }
 }
 
 export const CartSchema = {
-    id: {
-        allowNull: false,
-        primaryKey: true,
-        type: DataTypes.UUID,
-        defaultValue: DataTypes.UUIDV4,
-        field: 'cart_id',
+  id: {
+    allowNull: false,
+    primaryKey: true,
+    type: DataTypes.UUID,
+    defaultValue: DataTypes.UUIDV4,
+    field: 'cart_id',
+  },
+  quantity: {
+    allowNull: false,
+    type: DataTypes.INTEGER,
+    defaultValue: 1,
+  },
+  userId: {
+    field: 'user_id',
+    allowNull: false,
+    type: DataTypes.UUID,
+    references: {
+      model: TABLE_NAME_USERS,
+      key: 'user_id',
     },
-    quantity: {
-        allowNull: false,
-        type: DataTypes.INTEGER,
-        defaultValue: 1,
+    onUpdate: 'CASCADE',
+    onDelete: 'CASCADE',
+  },
+  productVariationId: {
+    field: 'variation_id',
+    allowNull: false,
+    type: DataTypes.UUID,
+    references: {
+      model: TABLE_NAME_VARIATIONS,
+      key: 'variation_id',
     },
-    userId: {
-        field: 'user_id',
-        allowNull: false,
-        type: DataTypes.UUID,
-        references: {
-            model: TABLE_NAME_USERS,
-            key: 'user_id',
-        },
-        onUpdate: 'CASCADE',
-        onDelete: 'CASCADE',
-    },
-     productVariationId: {
-        field: 'variation_id',
-        allowNull: false,
-        type: DataTypes.UUID, 
-        references: {
-            model: TABLE_NAME_VARIATIONS, 
-            key: 'variation_id',
-        },
-        onUpdate: 'CASCADE',
-        onDelete: 'CASCADE',
-    }
+    onUpdate: 'CASCADE',
+    onDelete: 'CASCADE',
+  },
 };

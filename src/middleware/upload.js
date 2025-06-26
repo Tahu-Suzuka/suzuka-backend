@@ -11,16 +11,19 @@ const ensureDir = (dirPath) => {
 
 // Filter untuk hanya menerima file gambar
 const imageFilter = (req, file, cb) => {
-    const allowedExtensions = /\.(jpg|jpeg|png)$/i; 
+  const allowedExtensions = /\.(jpg|jpeg|png)$/i;
 
-    const isExtensionAllowed = allowedExtensions.test(path.extname(file.originalname));
-    const isMimeTypeAllowed = file.mimetype.startsWith('image/');
+  const isExtensionAllowed = allowedExtensions.test(path.extname(file.originalname));
+  const isMimeTypeAllowed = file.mimetype.startsWith('image/');
 
-    if (isExtensionAllowed && isMimeTypeAllowed) {
-        cb(null, true);
-    } else {
-        cb(new Error('Format gambar tidak valid. Hanya file JPG, JPEG, PNG yang diperbolehkan.'), false);
-    }
+  if (isExtensionAllowed && isMimeTypeAllowed) {
+    cb(null, true);
+  } else {
+    cb(
+      new Error('Format gambar tidak valid. Hanya file JPG, JPEG, PNG yang diperbolehkan.'),
+      false
+    );
+  }
 };
 
 // Konfigurasi penyimpanan untuk FOTO PROFIL
@@ -59,7 +62,6 @@ const reviewStorage = multer.diskStorage({
     cb(null, dir);
   },
   filename: (req, file, cb) => {
-
     const timestamp = Date.now();
     const extension = path.extname(file.originalname);
     cb(null, `review-${timestamp}${extension}`);
@@ -79,7 +81,6 @@ const categoryStorage = multer.diskStorage({
   },
 });
 
-
 export const uploadProfile = multer({
   storage: profileStorage,
   fileFilter: imageFilter,
@@ -96,7 +97,7 @@ export const uploadReview = multer({
   storage: reviewStorage,
   fileFilter: imageFilter,
   limits: { fileSize: 2 * 1024 * 1024 },
-}).array('review_images', 2); 
+}).array('review_images', 2);
 
 export const uploadCategory = multer({
   storage: categoryStorage,

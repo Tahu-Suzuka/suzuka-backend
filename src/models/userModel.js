@@ -1,13 +1,13 @@
-import { Model, DataTypes } from "sequelize";
+import { Model, DataTypes } from 'sequelize';
 
-const TABLE_NAME_USERS = "users";
+const TABLE_NAME_USERS = 'users';
 
 class User extends Model {
   static config(sequelize) {
     return {
       sequelize,
       tableName: TABLE_NAME_USERS,
-      modelName: "User",
+      modelName: 'User',
       timestamps: false,
     };
   }
@@ -18,14 +18,14 @@ const UserSchema = {
     type: DataTypes.UUID, // Gunakan UUID
     primaryKey: true,
     defaultValue: DataTypes.UUIDV4, // Ini akan menghasilkan UUID otomatis jika tidak diberikan
-    field: "user_id",
+    field: 'user_id',
     allowNull: false,
   },
   name: {
     allowNull: false,
     type: DataTypes.STRING,
   },
-  password : {
+  password: {
     allowNull: false,
     type: DataTypes.STRING,
   },
@@ -34,13 +34,13 @@ const UserSchema = {
     type: DataTypes.STRING,
   },
   address: {
-    type: DataTypes.STRING
+    type: DataTypes.STRING,
   },
   phone: {
-    type: DataTypes.STRING
+    type: DataTypes.STRING,
   },
   image: {
-    type: DataTypes.STRING
+    type: DataTypes.STRING,
   },
   otp: {
     type: DataTypes.STRING,
@@ -53,13 +53,12 @@ const UserSchema = {
   role: {
     type: DataTypes.ENUM('user', 'admin'),
     defaultValue: 'user',
-    allowNull: false
+    allowNull: false,
   },
   googleId: {
-  type: DataTypes.STRING,
-  unique: true,
-  }
-
+    type: DataTypes.STRING,
+    unique: true,
+  },
 };
 
 export { User, UserSchema, TABLE_NAME_USERS };

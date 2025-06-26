@@ -8,21 +8,21 @@ import { validateCreateProduct, validateUpdateProduct } from '../middleware/vali
 const router = Router();
 
 router.post(
-    '/', 
-    authenticate, 
-    validateAdmin, 
-    uploadProduct, 
-    validateCreateProduct,
-    ProductController.createProduct
+  '/',
+  authenticate,
+  validateAdmin,
+  uploadProduct,
+  validateCreateProduct,
+  ProductController.createProduct
 );
 
 router.put(
-    '/:id', 
-    authenticate, 
-    validateAdmin,
-    uploadProduct, 
-    validateUpdateProduct,
-    ProductController.updateProduct
+  '/:id',
+  authenticate,
+  validateAdmin,
+  uploadProduct,
+  validateUpdateProduct,
+  ProductController.updateProduct
 );
 
 router.delete('/:id', authenticate, validateAdmin, ProductController.deleteProduct);

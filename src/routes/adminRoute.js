@@ -5,11 +5,6 @@ import { validateAdmin } from '../middleware/validateAdmin.js';
 
 const router = Router();
 
-router.get(
-  '/dashboard/stats',
-  authenticate,
-  validateAdmin,
-  AdminController.getDashboardStats
-);
+router.get('/dashboard/stats', authenticate, validateAdmin, AdminController.getDashboardStats);
 
 export default router;

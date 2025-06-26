@@ -5,89 +5,89 @@ import { TABLE_NAME_USERS } from './userModel.js';
 const TABLE_NAME_ORDERS = 'orders';
 
 class Order extends Model {
-    static config(sequelize) {
-        return {
-            sequelize,
-            tableName: TABLE_NAME_ORDERS,
-            modelName: 'Order',
-            timestamps: true,
-            createdAt: 'orderDate', 
-            updatedAt: 'updatedAt',
-        };
-    }
+  static config(sequelize) {
+    return {
+      sequelize,
+      tableName: TABLE_NAME_ORDERS,
+      modelName: 'Order',
+      timestamps: true,
+      createdAt: 'orderDate',
+      updatedAt: 'updatedAt',
+    };
+  }
 }
 
 const OrderSchema = {
-    id: {
-        allowNull: false,
-        primaryKey: true,
-        type: DataTypes.UUID,
-        defaultValue: DataTypes.UUIDV4,
-        field: 'order_id',
+  id: {
+    allowNull: false,
+    primaryKey: true,
+    type: DataTypes.UUID,
+    defaultValue: DataTypes.UUIDV4,
+    field: 'order_id',
+  },
+  userId: {
+    field: 'user_id',
+    allowNull: false,
+    type: DataTypes.UUID,
+    references: {
+      model: TABLE_NAME_USERS,
+      key: 'user_id',
     },
-    userId: {
-        field: 'user_id',
-        allowNull: false,
-        type: DataTypes.UUID,
-        references: {
-            model: TABLE_NAME_USERS,
-            key: 'user_id',
-        },
-    },
+  },
 
-    subtotal: {
-        field: 'subtotal',
-        allowNull: false,
-        type: DataTypes.FLOAT,
-    },
-    shipPrice: {
-        field: 'ship_price',
-        allowNull: false,
-        type: DataTypes.FLOAT,
-    },
-        serviceFee: {
-        field: 'service_fee',
-        allowNull: false,
-        type: DataTypes.FLOAT,
-    },
-    discountAmount: {
-        field: 'discount_amount',
-        allowNull: false,
-        type: DataTypes.FLOAT,
-        defaultValue: 0,
-    },
-    voucherCode: {
-        field: 'voucher_code',
-        allowNull: true,
-        type: DataTypes.STRING,
-    },
-    totalPayment: {
-        field: 'total_payment',
-        allowNull: false,
-        type: DataTypes.FLOAT,
-    },
-     paymentMethod: {
-        field: 'payment_method',
-        type: DataTypes.STRING,
-        allowNull: true,
-    },
-    orderStatus: {
-        field: 'order_status',
-        allowNull: false,
-        type: DataTypes.ENUM(
-            'Menunggu Pembayaran', 
-            'Dibayar', 
-            'Diproses', 
-            'Dikirim', 
-            'Selesai', 
-            'Dibatalkan'
-        ),
-        defaultValue: 'Menunggu Pembayaran',
-    },
-    note: {
-        type: DataTypes.TEXT,
-        allowNull: true,
-    },
+  subtotal: {
+    field: 'subtotal',
+    allowNull: false,
+    type: DataTypes.FLOAT,
+  },
+  shipPrice: {
+    field: 'ship_price',
+    allowNull: false,
+    type: DataTypes.FLOAT,
+  },
+  serviceFee: {
+    field: 'service_fee',
+    allowNull: false,
+    type: DataTypes.FLOAT,
+  },
+  discountAmount: {
+    field: 'discount_amount',
+    allowNull: false,
+    type: DataTypes.FLOAT,
+    defaultValue: 0,
+  },
+  voucherCode: {
+    field: 'voucher_code',
+    allowNull: true,
+    type: DataTypes.STRING,
+  },
+  totalPayment: {
+    field: 'total_payment',
+    allowNull: false,
+    type: DataTypes.FLOAT,
+  },
+  paymentMethod: {
+    field: 'payment_method',
+    type: DataTypes.STRING,
+    allowNull: true,
+  },
+  orderStatus: {
+    field: 'order_status',
+    allowNull: false,
+    type: DataTypes.ENUM(
+      'Menunggu Pembayaran',
+      'Dibayar',
+      'Diproses',
+      'Dikirim',
+      'Selesai',
+      'Dibatalkan'
+    ),
+    defaultValue: 'Menunggu Pembayaran',
+  },
+  note: {
+    type: DataTypes.TEXT,
+    allowNull: true,
+  },
 };
 
 export { Order, OrderSchema, TABLE_NAME_ORDERS };
