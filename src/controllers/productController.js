@@ -1,6 +1,7 @@
 import { ProductService } from '../services/productService.js';
 import { Product } from '../models/productModel.js';
 import { validationResult } from 'express-validator';
+import { deleteFromGCS, deleteMultipleFromGCS } from '../configs/gcs.js';
 
 const productService = new ProductService(Product);
 
@@ -12,33 +13,23 @@ class ProductController {
     }
     try {
       const adminId = req.user.id;
-      const data = { ...req.body, userId: adminId };
-
-      if (req.files && req.files.length > 0) {
-        const mainImageFile = req.files.find((f) => f.fieldname === 'mainImage');
-        const additionalImageFiles = req.files.filter((f) => f.fieldname === 'additionalImages');
-
-        if (mainImageFile) {
-          data.mainImage = mainImageFile.path.replace(/\\/g, '/').replace('public/', '/');
-        }
-        additionalImageFiles.forEach((file, index) => {
-          data[`additionalImage${index + 1}`] = file.path
-            .replace(/\\/g, '/')
-            .replace('public/', '/');
-        });
-      }
+      const data = { ...req.body };
+      data.userId = adminId;
 
       const product = await productService.create(data);
+      
       res.status(201).json({
         message: 'Berhasil membuat produk baru',
         data: product,
       });
     } catch (error) {
+      console.error('Error creating product:', error);
       res.status(500).json({
         message: error.message || 'Gagal membuat produk',
       });
     }
   }
+
   async getProductById(req, res) {
     try {
       const { id } = req.params;
@@ -81,49 +72,60 @@ class ProductController {
     }
     try {
       const { id } = req.params;
-      const data = req.body; // Ambil data teks dari form (nama, harga, dll.)
+      const data = { ...req.body };
 
-      // 1. Ambil data produk yang ada untuk memeriksa gambar lama
       const existingProduct = await productService.getById(id);
       if (!existingProduct) {
         return res.status(404).json({ message: `Produk dengan ID ${id} tidak ditemukan` });
       }
 
-      // 2. Proses file-file baru jika ada yang diunggah
-      if (req.files && req.files.length > 0) {
-        const mainImageFile = req.files.find((f) => f.fieldname === 'mainImage');
-        const additionalImageFiles = req.files.filter((f) => f.fieldname === 'additionalImages');
-
-        if (mainImageFile) {
-          data.mainImage = mainImageFile.path.replace(/\\/g, '/').replace('public/', '/');
+      // Hapus gambar lama jika ada gambar baru
+      if (data.mainImage && existingProduct.mainImage) {
+        await deleteFromGCS(existingProduct.mainImage);
+      }
+      
+      // Hapus additional images lama jika ada yang baru
+      const additionalImageFields = ['additionalImage1', 'additionalImage2', 'additionalImage3'];
+      for (const field of additionalImageFields) {
+        if (data[field] && existingProduct[field]) {
+          await deleteFromGCS(existingProduct[field]);
         }
-        additionalImageFiles.forEach((file, index) => {
-          data[`additionalImage${index + 1}`] = file.path
-            .replace(/\\/g, '/')
-            .replace('public/', '/');
-        });
       }
 
-      // 3. Panggil service untuk update data produk (termasuk path gambar baru)
       const updatedProduct = await productService.update(id, data);
-
       res.status(200).json({
         message: 'Berhasil memperbarui produk',
         data: updatedProduct,
       });
     } catch (error) {
+      console.error('Error updating product:', error);
       res.status(500).json({ message: error.message || 'Gagal memperbarui produk' });
     }
   }
+
   async deleteProduct(req, res) {
     try {
       const { id } = req.params;
-      const product = await productService.delete(id);
-      if (!product) {
+      
+      // Ambil data produk untuk mendapatkan URL gambar sebelum dihapus
+      const existingProduct = await productService.getById(id);
+      if (!existingProduct) {
         return res.status(404).json({
           message: `Produk dengan ID ${id} tidak ditemukan`,
         });
       }
+
+      // Hapus semua gambar dari GCS
+      const imagesToDelete = [
+        existingProduct.mainImage,
+        existingProduct.additionalImage1,
+        existingProduct.additionalImage2,
+        existingProduct.additionalImage3
+      ];
+      await deleteMultipleFromGCS(imagesToDelete);
+
+      // Hapus data produk dari database
+      const product = await productService.delete(id);
       res.status(200).json({
         message: 'Berhasil menghapus produk',
         data: product,

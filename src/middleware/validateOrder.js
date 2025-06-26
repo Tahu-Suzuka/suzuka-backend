@@ -97,7 +97,7 @@ export const validateManualOrder = [
   body('items')
     .isArray({ min: 1 })
     .withMessage('Input "items" harus berupa array dan tidak boleh kosong.'),
-  validateVariationIdForManualOrder(), // <-- Gunakan validator yang sudah benar
+  validateVariationIdForManualOrder(),
   body('items.*.quantity').isInt({ min: 1 }).withMessage('Kuantitas produk minimal harus 1.'),
   body('shipPrice').optional().isNumeric().withMessage('Ongkos kirim harus berupa angka.'),
   body('note').optional().isString().withMessage('Note harus berupa teks.'),

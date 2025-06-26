@@ -186,12 +186,10 @@ class ReportService {
         return res.filename;
     }
     
-    // Method publik untuk API JSON
     async getProcessingReport() {
         return await this._getProcessingOrdersData();
     }
 
-    // Method publik untuk membuat PDF
     async createProcessingReportPDF() {
         const reportData = await this._getProcessingOrdersData();
         const htmlTemplate = fs.readFileSync(path.join(__dirname, '../templates/processing-report-template.html'), 'utf-8');

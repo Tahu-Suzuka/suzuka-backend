@@ -1,5 +1,7 @@
 import { UserService } from '../services/userService.js';
 import { validationResult } from 'express-validator';
+import { uploadToGCS } from '../middleware/upload.js';
+import { deleteFromGCS } from '../configs/gcs.js';
 
 const userService = new UserService();
 
@@ -115,30 +117,42 @@ class UserController {
     }
   }
 
-  async updateProfilePicture(req, res) {
-    const errors = validationResult(req);
-    if (!errors.isEmpty()) {
-      return res.status(422).json({ errors: errors.array() });
-    }
-    try {
-      if (!req.file) {
-        return res.status(400).json({ message: 'File gambar tidak ditemukan.' });
-      }
-
-      const userId = req.user.id;
-      // Dapatkan path relatif yang bisa diakses publik
-      const imagePath = req.file.path.replace(/\\/g, '/').replace('public/', '/');
-
-      const updatedUser = await userService.updateProfile(userId, { image: imagePath });
-
-      res.status(200).json({
-        message: 'Foto profil berhasil diperbarui',
-        data: updatedUser,
-      });
-    } catch (err) {
-      res.status(400).json({ message: err.message });
-    }
+ async updateProfilePicture(req, res) {
+  const errors = validationResult(req);
+  if (!errors.isEmpty()) {
+    return res.status(422).json({ errors: errors.array() });
   }
+  try {
+    if (!req.file) {
+      return res.status(400).json({ message: 'File gambar tidak ditemukan.' });
+    }
+
+    const userId = req.user.id;
+
+    // Ambil data user lama untuk mendapatkan URL gambar lama
+    const existingUser = await userService.getById(userId);
+    if (!existingUser) {
+      return res.status(404).json({ message: 'User tidak ditemukan.' });
+    }
+
+    // Upload gambar baru ke GCS
+    const imagePath = await uploadToGCS(req.file, 'profiles');
+
+    // Hapus gambar lama jika ada
+    if (existingUser.image) {
+      await deleteFromGCS(existingUser.image);
+    }
+
+    const updatedUser = await userService.updateProfile(userId, { image: imagePath });
+
+    res.status(200).json({
+      message: 'Foto profil berhasil diperbarui',
+      data: updatedUser,
+    });
+  } catch (err) {
+    res.status(400).json({ message: err.message });
+  }
+}
 
   async getProfile(req, res) {
     try {
@@ -166,6 +180,21 @@ class UserController {
   async deleteUser(req, res) {
     try {
       const { id } = req.params;
+      
+      // Ambil data user untuk mendapatkan URL gambar sebelum dihapus
+      const existingUser = await userService.getById(id);
+      if (!existingUser) {
+        return res.status(404).json({
+          message: `User dengan ID ${id} tidak ditemukan`,
+        });
+      }
+
+      // Hapus gambar profil dari GCS jika ada
+      if (existingUser.image) {
+        await deleteFromGCS(existingUser.image);
+      }
+
+      // Hapus data user dari database
       await userService.delete(id);
       res.status(200).json({
         message: `User dengan ID ${id} berhasil dihapus`,

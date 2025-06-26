@@ -1,6 +1,7 @@
 import { Router } from 'express';
 import AuthController from '../controllers/authController.js';
 import UserController from '../controllers/userController.js';
+import { processUploads } from '../middleware/processUploads.js';
 import { uploadProfile } from '../middleware/upload.js';
 import { authenticate } from '../middleware/auth.js';
 import passport from 'passport';
@@ -38,7 +39,8 @@ router.patch('/profile', authenticate, validateUpdateProfile, UserController.upd
 router.patch(
   '/profile/picture',
   authenticate,
-  uploadProfile.single('profile_picture'),
+  uploadProfile,
+  processUploads('profiles', [{ name: 'profile_picture', path: '', single: true }]),
   UserController.updateProfilePicture
 );
 

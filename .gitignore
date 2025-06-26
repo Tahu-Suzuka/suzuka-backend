@@ -4,3 +4,5 @@ node_modules
 /scripts/seedDatabase.js
 
 /public
+
+/src/configs/gcs-key.json
