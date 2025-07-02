@@ -41,6 +41,7 @@ const UserSchema = {
   },
   image: {
     type: DataTypes.STRING,
+    defaultValue: 'https://storage.googleapis.com/tahu-suzuka-bucket/default/foto-profile.png'
   },
   otp: {
     type: DataTypes.STRING,

@@ -36,21 +36,25 @@ const ProductSchema = {
     field: 'main_image',
     type: DataTypes.STRING,
     allowNull: true,
+    defaultValue: 'https://storage.googleapis.com/tahu-suzuka-bucket/default/default-no-image.jpg',
   },
   additionalImage1: {
     field: 'additional_image_1',
     type: DataTypes.STRING,
     allowNull: true,
+    defaultValue: 'https://storage.googleapis.com/tahu-suzuka-bucket/default/default-no-image.jpg',
   },
   additionalImage2: {
     field: 'additional_image_2',
     type: DataTypes.STRING,
     allowNull: true,
+    defaultValue: 'https://storage.googleapis.com/tahu-suzuka-bucket/default/default-no-image.jpg',
   },
   additionalImage3: {
     field: 'additional_image_3',
     type: DataTypes.STRING,
     allowNull: true,
+    defaultValue: 'https://storage.googleapis.com/tahu-suzuka-bucket/default/default-no-image.jpg',
   },
   categoryId: {
     field: 'category_id',

@@ -29,11 +29,13 @@ const corsOptions = {
       'http://localhost:5174',
       'http://127.0.0.1:3000',
       'http://127.0.0.1:5173',
-      // Domain production frontend
-      'https://tahusuzuka.com',
-      'https://www.tahusuzuka.com',
-      'http://tahusuzuka.com',
-      'http://www.tahusuzuka.com'
+      // Domain production frontend (Vercel)
+      'https://tahusuzuka.shop',
+      'https://www.tahusuzuka.shop',
+      'http://tahusuzuka.shop',
+      'http://www.tahusuzuka.shop',
+      // Vercel preview domains
+      'https://suzuka-frontend-*.vercel.app'
     ];
     
     // Tambahkan external IP jika sudah di-set (bukan placeholder)

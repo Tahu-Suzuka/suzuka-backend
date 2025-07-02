@@ -30,6 +30,7 @@ const CategorySchema = {
     type: DataTypes.STRING,
     allowNull: true,
     field: 'category_image',
+    defaultValue: 'https://storage.googleapis.com/tahu-suzuka-bucket/default/default-no-image.jpg',
   },
 };
 

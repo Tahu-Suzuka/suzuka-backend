@@ -4,9 +4,8 @@ import { config } from 'dotenv';
 import { fileURLToPath } from 'url';
 import path from 'path';
 
-config(); // Memuat variabel dari .env
+config();
 
-// Mendapatkan __dirname di ES Module
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
@@ -50,33 +49,28 @@ const uploadToGCS = async (file, destination) => {
  */
 const deleteFromGCS = async (fileUrl) => {
   try {
-    if (!fileUrl) return true; // Jika URL kosong, anggap berhasil
+    if (!fileUrl) return;
     
-    // Extract filename dari URL
-    // URL format: https://storage.googleapis.com/bucket-name/folder/filename
-    const urlParts = fileUrl.split('/');
-    const fileName = urlParts.slice(4).join('/'); // Ambil bagian setelah bucket name
+    const protectedImages = [
+      'default/foto-profile.png',   
+      'default/default-no-image.jpg'
+    ];
     
-    if (!fileName) {
-      console.log('Invalid file URL, skipping deletion:', fileUrl);
-      return true;
-    }
-
-    const file = bucket.file(fileName);
-    const [exists] = await file.exists();
+    // Extract filename from URL
+    const fileName = fileUrl.replace(`https://storage.googleapis.com/${bucketName}/`, '');
     
-    if (exists) {
-      await file.delete();
-      console.log(`File deleted from GCS: ${fileName}`);
-    } else {
-      console.log(`File not found in GCS: ${fileName}`);
+    // Skip deletion if it's a protected default image
+    if (protectedImages.includes(fileName)) {
+      console.log(`Skipping deletion of protected image: ${fileName}`);
+      return;
     }
     
-    return true;
+    // Delete only non-default images
+    await bucket.file(fileName).delete();
+    console.log(`Successfully deleted ${fileName} from GCS`);
+    
   } catch (error) {
-    console.error('Error deleting from GCS:', error.message);
-    // Jangan throw error, karena tidak ingin menggagalkan operasi utama
-    return false;
+    console.error('Error deleting file from GCS:', error);
   }
 };
 
@@ -90,10 +84,10 @@ const deleteMultipleFromGCS = async (fileUrls) => {
     if (!fileUrls || fileUrls.length === 0) return true;
     
     const deletePromises = fileUrls
-      .filter(url => url) // Filter URL yang tidak kosong
+      .filter(url => url) 
       .map(url => deleteFromGCS(url));
     
-    await Promise.allSettled(deletePromises); // Gunakan allSettled agar tidak gagal jika salah satu error
+    await Promise.allSettled(deletePromises);
     return true;
   } catch (error) {
     console.error('Error deleting multiple files from GCS:', error.message);
