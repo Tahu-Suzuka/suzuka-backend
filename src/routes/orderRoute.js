@@ -28,6 +28,8 @@ router.post(
   OrderController.createManualOrder
 ); // Pesanan manual (hanya untuk admin)
 router.get('/all', authenticate, validateAdmin, OrderController.getAllOrders); // Lihat semua pesanan (hanya untuk admin)
+router.get('/all/:id', authenticate, validateAdmin, OrderController.getSingleOrderByAdmin); //lihat detail satu pesanan (hanya untuk admin)
+
 router.get('/', authenticate, OrderController.getUserOrders); // Lihat riwayat pesanan
 router.get('/:id', authenticate, OrderController.getSingleOrder); // Lihat detail satu pesanan
 

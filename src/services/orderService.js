@@ -284,6 +284,44 @@ class OrderService {
     return orders;
   }
 
+  async getOrderDetailsByAdmin(orderId) {
+  const order = await Order.findOne({
+    where: { id: orderId },
+    include: [
+      {
+        model: OrderItem,
+        as: 'items',
+        include: [
+          {
+            model: ProductVariation,
+            as: 'variation',
+            attributes: ['id', 'name', 'price'],
+            include: [
+              {
+                model: Product,
+                as: 'product',
+                attributes: ['id', 'product_name'],
+              },
+            ],
+          },
+        ],
+      },
+      {
+        model: User,
+        as: 'user',
+        attributes: ['id', 'name', 'phone', 'address'],
+      },
+    ],
+  });
+
+  if (!order) {
+    throw new Error('Pesanan tidak ditemukan.');
+  }
+
+  return order;
+}
+
+
   async getOrderDetails(orderId, userId) {
     const whereClause = { id: orderId };
     if (userId) {

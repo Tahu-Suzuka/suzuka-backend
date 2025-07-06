@@ -65,6 +65,20 @@ class OrderController {
     }
   }
 
+  async getSingleOrderByAdmin(req, res) {
+  try {
+    const { id } = req.params;
+    const order = await orderService.getOrderDetailsByAdmin(id);
+    res.status(200).json({
+      message: 'Berhasil mengambil detail pesanan oleh admin',
+      data: order,
+    });
+  } catch (error) {
+    res.status(404).json({ message: error.message });
+  }
+}
+
+
   async getUserOrders(req, res) {
     try {
       const userId = req.user.id;
