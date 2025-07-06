@@ -175,34 +175,51 @@ class ReportService {
         return await this._getProductSalesData(queryParams);
     }
 
-    async createProductSalesReportPDF(queryParams) {
-        const reportData = await this._getProductSalesData(queryParams);
-        const htmlTemplate = fs.readFileSync(path.join(__dirname, '../templates/product-sales-template.html'), 'utf-8');
-        const document = {
-            html: htmlTemplate, data: { report: reportData },
-            path: `./laporan-penjualan-${Date.now()}.pdf`
-        };
-        const res = await pdf.create(document, { format: "A4", orientation: "portrait", border: "10mm" });
-        return res.filename;
-    }
+async createProductSalesReportPDF(queryParams) {
+    const reportData = await this._getProductSalesData(queryParams);
+    const htmlTemplate = fs.readFileSync(path.join(__dirname, '../templates/product-sales-template.html'), 'utf-8');
+    const document = {
+        html: htmlTemplate, 
+        data: { report: reportData },
+        path: `./laporan-penjualan-${Date.now()}.pdf`
+    };
+    
+    // Add PhantomJS path for production
+    const options = { 
+        format: "A4", 
+        orientation: "portrait", 
+        border: "10mm",
+        phantomPath: process.env.NODE_ENV === 'production' ? '/usr/local/bin/phantomjs' : undefined
+    };
+    
+    const res = await pdf.create(document, options);
+    return res.filename;
+}
     
     async getProcessingReport() {
         return await this._getProcessingOrdersData();
     }
 
-    async createProcessingReportPDF() {
-        const reportData = await this._getProcessingOrdersData();
-        const htmlTemplate = fs.readFileSync(path.join(__dirname, '../templates/processing-report-template.html'), 'utf-8');
-        const document = {
-            html: htmlTemplate,
-            data: { report: reportData },
-            path: `./laporan-operasional-${Date.now()}.pdf`
-        };
-        const options = { format: "A4", orientation: "portrait", border: "10mm" };
+async createProcessingReportPDF() {
+    const reportData = await this._getProcessingOrdersData();
+    const htmlTemplate = fs.readFileSync(path.join(__dirname, '../templates/processing-report-template.html'), 'utf-8');
+    const document = {
+        html: htmlTemplate,
+        data: { report: reportData },
+        path: `./laporan-operasional-${Date.now()}.pdf`
+    };
+    
+    // Add PhantomJS path for production
+    const options = { 
+        format: "A4", 
+        orientation: "portrait", 
+        border: "10mm",
+        phantomPath: process.env.NODE_ENV === 'production' ? '/usr/local/bin/phantomjs' : undefined
+    };
 
-        const res = await pdf.create(document, options);
-        return res.filename;
-    }
+    const res = await pdf.create(document, options);
+    return res.filename;
+  }
 }
 
 export { ReportService };
