@@ -414,7 +414,24 @@ class OrderService {
         email: user.email,
         phone: user.phone,
       },
-    };
+      enabled_payments: [
+      "bca_va",
+      "bni_va", 
+      "bri_va",
+      "mandiri_va",
+      "permata_va",
+      "other_va",
+      
+      "gopay",
+      "shopeepay", 
+      "dana",
+      "ovo",
+      "linkaja",
+      
+      "other_qris"
+    ]
+  };
+
 
     const transaction = await snap.createTransaction(parameter);
     return transaction.token;
