@@ -11,6 +11,9 @@ router.get('/', ReviewController.getAllReviews);
 
 router.get('/product/:productId', ReviewController.getProductReviews);
 
+// Route untuk cek apakah user sudah memberikan review pada produk tertentu dalam order
+router.get('/order/:orderId/product/:productId/check', authenticate, ReviewController.checkProductReview);
+
 router.post(
   '/', 
   authenticate, 

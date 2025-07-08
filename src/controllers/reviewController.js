@@ -17,20 +17,39 @@ class ReviewController {
       userId
     };
 
-    // Gambar sudah diproses oleh processUploads middleware
-    // Field name akan menjadi image1, image2 sesuai dengan model database
-    // Tidak perlu set null karena sudah ada di req.body atau undefined
-
     const newReview = await reviewService.createReview(data);
 
     res.status(201).json({
       message: 'Ulasan Anda berhasil dikirim',
       data: newReview,
     });
-  } catch (error) {
-    res.status(400).json({ message: error.message });
-  }
+    } catch (error) {
+      if (error.message.includes('sudah memberikan ulasan')) {
+        return res.status(409).json({ 
+          message: error.message,
+          code: 'REVIEW_ALREADY_EXISTS'
+        });
+      }
+      
+      res.status(400).json({ message: error.message });
+    }
 }
+
+  async checkProductReview(req, res) {
+    try {
+      const { orderId, productId } = req.params;
+      const userId = req.user.id;
+      
+      const hasReviewed = await reviewService.hasUserReviewedProduct(userId, orderId, productId);
+      
+      res.status(200).json({
+        message: 'Status review berhasil dicek',
+        hasReviewed: hasReviewed
+      });
+    } catch (error) {
+      res.status(400).json({ message: error.message });
+    }
+  }
 
   async getProductReviews(req, res) {
     try {

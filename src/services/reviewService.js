@@ -12,6 +12,18 @@ class ReviewService {
       throw new Error('Anda hanya bisa memberi ulasan untuk pesanan yang sudah Selesai.');
     }
 
+     const existingReview = await Review.findOne({
+      where: { 
+        orderId: orderId,
+        productId: productId,
+        userId: userId 
+      }
+    });
+
+    if (existingReview) {
+      throw new Error('Anda sudah memberikan ulasan untuk produk ini pada pesanan tersebut.');
+    }
+
     const newReview = await Review.create({
       rating,
       comment,
@@ -23,6 +35,20 @@ class ReviewService {
     });
 
     return newReview;
+  }
+
+
+// Method untuk cek apakah produk sudah di-review dalam order tertentu
+  async hasUserReviewedProduct(userId, orderId, productId) {
+    const review = await Review.findOne({
+      where: { 
+        userId: userId,
+        orderId: orderId,
+        productId: productId 
+      }
+    });
+
+    return !!review; 
   }
 
   async getReviewsForProduct(productId) {
