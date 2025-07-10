@@ -80,6 +80,25 @@ class VoucherController {
       res.status(500).json({ message: error.message || 'Gagal menghapus voucher' });
     }
   }
+
+   async applyVoucher(req, res) {
+        try {
+            const { code } = req.body;
+            const validVoucher = await voucherService.validateVoucherForUser(code);
+
+            res.status(200).json({
+                message: 'Voucher valid dan bisa digunakan.',
+                data: validVoucher
+            });
+        } catch (error) {
+            // Jika service melempar error (misal: voucher tidak ditemukan), kirim 404
+            if (error.message.includes('tidak ditemukan') || error.message.includes('kedaluwarsa')) {
+                return res.status(404).json({ message: error.message });
+            }
+            // Untuk error lainnya
+            res.status(400).json({ message: error.message });
+        }
+    }
 }
 
 export default new VoucherController();

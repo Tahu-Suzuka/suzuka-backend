@@ -56,6 +56,22 @@ class VoucherService {
 
     return voucher;
   }
+
+      async validateVoucherForUser(code) {
+        // Kita bisa panggil ulang method yang sudah ada untuk validasi dasar
+        const voucher = await this.getAndValidateVoucher(code);
+
+        // Jika voucher valid, kembalikan hanya data yang dibutuhkan oleh frontend
+        // Ini lebih aman daripada mengirim semua data voucher.
+        return {
+            code: voucher.code,
+            type: voucher.type,
+            value: voucher.value,
+            description: voucher.description,
+            minPurchase: voucher.minPurchase,
+            maxDiscount: voucher.maxDiscount
+        };
+    }
 }
 
 export { VoucherService };

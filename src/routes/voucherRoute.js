@@ -6,6 +6,15 @@ import { validateCreateVoucher, validateUpdateVoucher } from '../middleware/vali
 
 const router = Router();
 
+// rute untuk pelanggan
+router.post(
+    '/apply',
+    authenticate,
+    VoucherController.applyVoucher
+);
+
+// rute untuk admin
+
 router.use(authenticate, validateAdmin);
 
 router.post('/', validateCreateVoucher, VoucherController.createVoucher);
