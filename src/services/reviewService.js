@@ -70,16 +70,35 @@ class ReviewService {
     return reviews;
   }
 
-  async getAllReviews() {
-    const reviews = await Review.findAll({
-      include: [
-        { model: User, as: 'user', attributes: ['name', 'email'] },
-        { model: Product, as: 'product', attributes: ['product_name'] },
-      ],
-      order: [['createdAt', 'DESC']],
-    });
-    return reviews;
-  }
+async getAllReviews(page = 1, limit = 8) {
+  const offset = (page - 1) * limit;
+
+  const { count, rows: reviews } = await Review.findAndCountAll({
+    include: [
+      { model: User, as: 'user', attributes: ['name', 'email'] },
+      { model: Product, as: 'product', attributes: ['product_name'] },
+    ],
+    order: [['createdAt', 'DESC']],
+    limit: parseInt(limit),
+    offset: parseInt(offset)
+  });
+
+  const totalPages = Math.ceil(count / limit);
+  const hasNextPage = page < totalPages;
+  const hasPrevPage = page > 1;
+
+  return {
+    reviews,
+    pagination: {
+      currentPage: parseInt(page),
+      totalPages,
+      totalItems: count,
+      itemsPerPage: parseInt(limit),
+      hasNextPage,
+      hasPrevPage
+    }
+  };
+}
 }
 
 export { ReviewService };

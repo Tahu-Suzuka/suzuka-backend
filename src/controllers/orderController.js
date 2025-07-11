@@ -46,24 +46,30 @@ class OrderController {
       res.status(400).json({ message: error.message });
     }
   }
-  async getAllOrders(req, res) {
-    const errors = validationResult(req);
-    if (!errors.isEmpty()) {
-      return res.status(422).json({ errors: errors.array() });
-    }
 
-    try {
-      const { status } = req.query;
-      const orders = await orderService.getAllOrders(status);
-
-      res.status(200).json({
-        message: 'Berhasil mengambil data pesanan',
-        data: orders,
-      });
-    } catch (error) {
-      res.status(500).json({ message: error.message || 'Gagal mengambil data pesanan.' });
-    }
+async getAllOrders(req, res) {
+  const errors = validationResult(req);
+  if (!errors.isEmpty()) {
+    return res.status(422).json({ errors: errors.array() });
   }
+
+  try {
+    const { status } = req.query;
+    const page = parseInt(req.query.page) || 1;
+    const limit = parseInt(req.query.limit) || 8;
+
+    const result = await orderService.getAllOrders(status, page, limit);
+
+    res.status(200).json({
+      message: 'Berhasil mengambil data pesanan',
+      data: result.orders,
+      pagination: result.pagination
+    });
+  } catch (error) {
+    res.status(500).json({ message: error.message || 'Gagal mengambil data pesanan.' });
+  }
+}
+
 
   async getSingleOrderByAdmin(req, res) {
   try {

@@ -28,19 +28,22 @@ class UserController {
     }
   }
 
-  async getAllUsers(req, res) {
-    try {
-      const users = await userService.getAll();
-      res.status(200).json({
-        message: 'Berhasil mengambil data semua user',
-        data: users,
-      });
-    } catch (error) {
-      res.status(500).json({
-        message: error.message || 'Gagal mengambil data user',
-      });
-    }
+ async getAllUsers(req, res) {
+  try {
+    const page = parseInt(req.query.page) || 1;
+    const limit = parseInt(req.query.limit) || 8;
+
+    const result = await userService.getAll(page, limit);
+
+    res.status(200).json({
+      message: 'Berhasil mengambil data semua user',
+      data: result.users,
+      pagination: result.pagination
+    });
+  } catch (error) {
+    res.status(500).json({ message: error.message || 'Gagal mengambil data user.' });
   }
+}
 
   async searchUsers(req, res) {
     try {

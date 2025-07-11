@@ -1,6 +1,5 @@
 import { ReviewService } from '../services/reviewService.js';
 import { validationResult } from 'express-validator';
-import { deleteFromGCS } from '../configs/gcs.js';
 
 const reviewService = new ReviewService();
 
@@ -79,18 +78,22 @@ class ReviewController {
     }
   }
 
-  async getAllReviews(req, res) {
-    try {
-      const reviews = await reviewService.getAllReviews();
-      res.status(200).json({
-        message: 'Berhasil mengambil semua ulasan',
-        total: reviews.length,
-        data: reviews,
-      });
-    } catch (error) {
-      res.status(500).json({ message: 'Gagal mengambil data ulasan.' });
-    }
+async getAllReviews(req, res) {
+  try {
+    const page = parseInt(req.query.page) || 1;
+    const limit = parseInt(req.query.limit) || 8;
+
+    const result = await reviewService.getAllReviews(page, limit);
+    
+    res.status(200).json({
+      message: 'Berhasil mengambil semua ulasan',
+      data: result.reviews,
+      pagination: result.pagination
+    });
+  } catch (error) {
+    res.status(500).json({ message: 'Gagal mengambil data ulasan.' });
   }
+}
 }
 
 export default new ReviewController();

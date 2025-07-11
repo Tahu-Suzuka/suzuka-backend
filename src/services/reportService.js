@@ -171,9 +171,35 @@ class ReportService {
         };
     }
 
-        async getProductSalesReport(queryParams) {
-        return await this._getProductSalesData(queryParams);
-    }
+  async getProductSalesReport(queryParams) {
+    const { page = 1, limit = 8, ...otherParams } = queryParams;
+    
+    // Get all data first (existing logic)
+    const reportData = await this._getProductSalesData(otherParams);
+    
+    // Apply pagination to sales data
+    const offset = (page - 1) * limit;
+    const totalItems = reportData.sales.length;
+    const paginatedSales = reportData.sales.slice(offset, offset + parseInt(limit));
+    
+    // Calculate pagination info
+    const totalPages = Math.ceil(totalItems / limit);
+    const hasNextPage = page < totalPages;
+    const hasPrevPage = page > 1;
+
+    return {
+      ...reportData,
+      sales: paginatedSales,
+      pagination: {
+        currentPage: parseInt(page),
+        totalPages,
+        totalItems,
+        itemsPerPage: parseInt(limit),
+        hasNextPage,
+        hasPrevPage
+      }
+    };
+  }
 
 async createProductSalesReportPDF(queryParams) {
     const reportData = await this._getProductSalesData(queryParams);

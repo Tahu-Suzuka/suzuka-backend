@@ -22,29 +22,36 @@ class UserService {
       address,
       phone,
       isVerified: true,
-      role: 'user', //
+      role: 'user', 
     });
     return user;
   }
 
-  async getAll() {
-    const users = await User.findAll({
-      attributes: {
-        include: [[sequelize.fn('COUNT', sequelize.col('orders.order_id')), 'orderCount']],
-        exclude: ['password', 'otp', 'googleId', 'isVerified'],
-      },
-      include: [
-        {
-          model: Order,
-          as: 'orders',
-          attributes: [],
-        },
-      ],
-      group: ['User.user_id'],
-      order: [['name', 'ASC']],
-    });
-    return users;
-  }
+ async getAll(page = 1, limit = 8) {
+  const offset = (page - 1) * limit;
+
+  const { count, rows: users } = await User.findAndCountAll({
+    attributes: { exclude: ['password'] }, // Jangan tampilkan password
+    limit: parseInt(limit),
+    offset: parseInt(offset)
+  });
+
+  const totalPages = Math.ceil(count / limit);
+  const hasNextPage = page < totalPages;
+  const hasPrevPage = page > 1;
+
+  return {
+    users,
+    pagination: {
+      currentPage: parseInt(page),
+      totalPages,
+      totalItems: count,
+      itemsPerPage: parseInt(limit),
+      hasNextPage,
+      hasPrevPage
+    }
+  };
+}
 
   async searchByName(query) {
     if (!query) {

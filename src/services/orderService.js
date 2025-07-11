@@ -258,31 +258,50 @@ class OrderService {
     });
   }
 
-  async getAllOrders(status) {
-    // Buat objek 'where' yang akan digunakan untuk query
-    const whereClause = {};
+async getAllOrders(status, page = 1, limit = 8) {
+  page = parseInt(page);
+  limit = parseInt(limit);
 
-    // Jika parameter 'status' diberikan, tambahkan ke kondisi where
-    if (status) {
-      whereClause.orderStatus = status;
-    }
+  if (isNaN(page) || page < 1) page = 1;
+  if (isNaN(limit) || limit < 1) limit = 8;
 
-    // Jalankan query dengan kondisi where yang sudah dibuat
-    const orders = await Order.findAll({
-      where: whereClause,
-      // Sertakan juga data user untuk ditampilkan
-      include: [
-        {
-          model: User,
-          as: 'user',
-          attributes: ['id', 'name'],
-        },
-      ],
-      order: [['orderDate', 'DESC']], // Urutkan dari yang terbaru
-    });
+  const offset = (page - 1) * limit;
 
-    return orders;
+  const whereClause = {};
+  if (status) {
+    whereClause.orderStatus = status;
   }
+
+  const { count, rows: orders } = await Order.findAndCountAll({
+    where: whereClause,
+    include: [
+      {
+        model: User,
+        as: 'user',
+        attributes: ['id', 'name'],
+      },
+    ],
+    order: [['orderDate', 'DESC']],
+    limit,
+    offset
+  });
+
+  const totalPages = Math.ceil(count / limit);
+  const hasNextPage = page < totalPages;
+  const hasPrevPage = page > 1;
+
+  return {
+    orders,
+    pagination: {
+      currentPage: page,
+      totalPages,
+      totalItems: count,
+      itemsPerPage: limit,
+      hasNextPage,
+      hasPrevPage
+    }
+  };
+}
 
   async getOrderDetailsByAdmin(orderId) {
   const order = await Order.findOne({
