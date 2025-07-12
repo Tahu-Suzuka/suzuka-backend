@@ -26,6 +26,7 @@ const corsOptions = {
       'http://localhost:3000',
       'http://localhost:3001', 
       'http://localhost:5173', // Vite default port
+      'http://localhost:4173',
       'http://localhost:5174',
       'http://127.0.0.1:3000',
       'http://127.0.0.1:5173',
@@ -38,8 +39,7 @@ const corsOptions = {
       'https://tahusuzuka.netlify.app',
     ];
     
-    // Tambahkan external IP jika sudah di-set (bukan placeholder)
-    if (process.env.EXTERNAL_IP && process.env.EXTERNAL_IP !== 'your-external-ip-here') {
+    if (process.env.EXTERNAL_IP && process.env.EXTERNAL_IP !== 'tahusuzuka.shop') {
       allowedOrigins.push(`http://${process.env.EXTERNAL_IP}:3000`);
       allowedOrigins.push(`http://${process.env.EXTERNAL_IP}:5173`);
       allowedOrigins.push(`http://${process.env.EXTERNAL_IP}:8080`);
