@@ -56,7 +56,12 @@ router.get(
     const user = req.user;
     const token = generateJwtToken(user);
 
-    res.json({ message: 'Login sukses', token, user });
+    const frontendCallbackUrl = 'https://tahusuzuka.shop/auth/google/callback';
+
+    const userString = encodeURIComponent(JSON.stringify(user));
+
+    res.redirect(`${frontendCallbackUrl}?token=${token}&user=${userString}`);
+
   }
 );
 

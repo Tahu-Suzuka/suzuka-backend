@@ -34,8 +34,8 @@ const corsOptions = {
       'https://www.tahusuzuka.shop',
       'http://tahusuzuka.shop',
       'http://www.tahusuzuka.shop',
-      // Vercel preview domains
-      'https://suzuka-frontend-*.vercel.app'
+      // Netlify preview domains
+      'https://tahusuzuka.netlify.app',
     ];
     
     // Tambahkan external IP jika sudah di-set (bukan placeholder)
